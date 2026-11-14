@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Генератор сайта аренды авто без водителя: src/ → dist/. Запуск: python3 src/build.py
-Фото машин: images/cars/<slug>-1.webp, -2, -3 (свои). Если своих нет — при сборке на Vercel
-скачиваются текущие фото с topautorent.kz (по одной-две на машину)."""
+Фото машин кладутся в images/cars/<slug>-1.webp, -2, -3 (jpg/png/webp) — на сайт попадают автоматически."""
 import json, os, re, shutil, sys, html, urllib.request
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -40,22 +39,15 @@ _P = {
  "check": '<path d="M4 12l5 5L20 6"/>',
  "fit": '<path d="M5 12l5 5L20 7"/>',
 }
+ROBOT = ('<svg viewBox="0 0 64 64" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M26 12h12a14 14 0 0 1 14 14v10a14 14 0 0 1-14 14H25l-12.5 8.5L15 47A14 14 0 0 1 12 36V26a14 14 0 0 1 14-14zm-1.5 9.5A6.5 6.5 0 0 0 18 28v5.5a6.5 6.5 0 0 0 6.5 6.5h15a6.5 6.5 0 0 0 6.5-6.5V28a6.5 6.5 0 0 0-6.5-6.5z"/>'
+         '<rect x="4.5" y="23" width="5" height="15" rx="2.5" fill="currentColor"/><rect x="54.5" y="23" width="5" height="15" rx="2.5" fill="currentColor"/>'
+         '<path d="M7 23v-7M57 23v-7" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>'
+         '<path d="M23 31.5q3.2-3.8 6.4 0M34.6 31.5q3.2-3.8 6.4 0M29 35.6q3 2.6 6 0" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>')
 def ic(n): return f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true">{_P[n]}</svg>'
 WA_IC = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.2-.2.3-.8 1-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.4-.5.3-.5c.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8zm8.4-18.2A11.8 11.8 0 0 0 1.7 17.8L0 24l6.4-1.7A11.8 11.8 0 0 0 24 12a11.7 11.7 0 0 0-3.6-8.4z"/></svg>'
 
 # ---------------------------------------------------------------- фото
 IMG_EXT = (".webp", ".jpg", ".jpeg", ".png", ".avif")
-def fetch(url, dst):
-    if os.environ.get("NO_FETCH"): return False
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36", "Referer": "https://topautorent.kz/"})
-        with urllib.request.urlopen(req, timeout=8) as r:
-            data = r.read()
-            if r.status != 200 or len(data) < 3000 or not r.headers.get("Content-Type", "").startswith("image/"): return False
-        dst.write_bytes(data); return True
-    except Exception as e:
-        print("  фото не скачано:", url, type(e).__name__); return False
-
 def photos(c):
     out_dir = DIST / "img" / "cars"; out_dir.mkdir(parents=True, exist_ok=True)
     res = []
@@ -64,11 +56,6 @@ def photos(c):
             f = ROOT / "images" / "cars" / f"{c['slug']}-{i}{ext}"
             if f.exists():
                 shutil.copyfile(f, out_dir / f.name); res.append(f"/img/cars/{f.name}"); break
-    if not res:
-        for i, url in enumerate(c["img"], 1):
-            ext = os.path.splitext(url)[1].lower() or ".jpg"
-            name = f"{c['slug']}-{i}{ext}"
-            if fetch(url, out_dir / name): res.append(f"/img/cars/{name}")
     return res
 
 # ---------------------------------------------------------------- общие блоки
@@ -99,7 +86,7 @@ def faq_ld(faq):
     return {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in faq]}
 
 NAV = [("Автопарк", "/avto/"), ("Цены", "/ceny/"), ("Условия", "/usloviya/"), ("Контакты", "/kontakty/")]
-LOGO = f'<b>T</b><span>Top Autorent<small>аренда авто · {CITY}</small></span>'
+LOGO = f'<b>T</b><span>TOPRENT<small>аренда авто · {CITY}</small></span>'
 
 def header(cur):
     nav = "".join(f'<a href="{u}"{" aria-current=page" if cur == u else ""}>{n}</a>' for n, u in NAV)
@@ -136,12 +123,12 @@ def fab():
 <div class="fab-p" id="fabp" hidden>
 <a href="{wa("Здравствуйте! Хочу арендовать авто.")}" target="_blank" rel="noopener">{WA_IC}<span>WhatsApp<small>ответим в чате</small></span></a>
 <a href="tel:{PHONE_TEL}">{ic("phone")}<span>Позвонить<small>{PHONE_DISPLAY}</small></span></a>
-<button type="button" data-chat>{ic("bot")}<span>ИИ-консультант<small>ответит сразу</small></span></button>
+<button type="button" data-chat>{ROBOT}<span>ИИ-консультант<small>ответит сразу</small></span></button>
 </div>
-<button class="fab-m" type="button" aria-label="Связаться: WhatsApp, звонок, ИИ-чат" aria-expanded="false" aria-controls="fabp">{ic("chat")}</button>
+<button class="fab-m" type="button" aria-label="Связаться: WhatsApp, звонок, ИИ-чат" aria-expanded="false" aria-controls="fabp">{ROBOT}</button>
 </div>
 <section class="chat" id="chat" hidden aria-label="ИИ-консультант">
-<div class="chat-h"><span><b>ИИ-консультант</b><small>машины, цены, условия</small></span><button type="button" data-chat-x aria-label="Закрыть чат">{ic("x")}</button></div>
+<div class="chat-h"><span class="av">{ROBOT}</span><span><b>ИИ-консультант</b><small>машины, цены, условия</small></span><button type="button" data-chat-x aria-label="Закрыть чат">{ic("x")}</button></div>
 <div class="chat-l" aria-live="polite"></div>
 <div class="chat-q">{q}</div>
 <form class="chat-f"><label class="sr" for="cq">Ваш вопрос</label><input id="cq" name="q" autocomplete="off" placeholder="Ваш вопрос" maxlength="500"><button type="submit" aria-label="Отправить">{ic("send")}</button></form>
@@ -168,7 +155,7 @@ def page(path, title, desc, body, cur="", ld=None, preload=None, og=None, noinde
 <meta property="og:title" content="{E(title)}"><meta property="og:description" content="{E(desc)}"><meta property="og:url" content="{url}"><meta property="og:image" content="{og_img}">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
-<link rel="preload" href="/assets/fonts/unbounded-cyrillic-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/inter-tight-cyrillic-800-normal.woff2" as="font" type="font/woff2" crossorigin>
 {pre}<style>{CSS}</style>
 <script type="application/ld+json">{json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False)}</script>
 </head>
@@ -196,8 +183,8 @@ def year(c): return f"{c['year']} г." if c["year"] else "год уточняй�
 def cls_names(c): return " · ".join(CLS[x]["name"] for x in c["cls"])
 
 def meta_cls(c):
-    k = [x for x in c["cls"] if not (x == "vnedorozhniki" and c["body"] in ("Внедорожник", "Кроссовер"))] or c["cls"]
-    return CLS[k[-1]]["name"]
+    k = [x for x in c["cls"] if not (x == "vnedorozhniki" and c["body"] in ("Внедорожник", "Кроссовер"))]
+    return CLS[k[-1]]["name"] if k else ""
 
 def card(c, eager=False):
     ph = c["ph"]
@@ -268,7 +255,7 @@ def build_home():
     by_price = sorted(CARS, key=lambda c: c["price"])
     rows = "".join(f'<a href="/klass/{k["slug"]}/"><b>{k["name"]}</b><span>от {rub(min(x["price"] for x in CARS if k["slug"] in x["cls"]))}</span></a>' for k in CLASSES)
     body = f'''<section class="hero dk"><div class="w hero-g">
-<div><h1>Аренда авто <span class="o">без водителя</span> <span class="cy">в Астане</span></h1>
+<div><p class="kick mo">Астана · прокат без водителя · с 10:00 до 23:00</p><h1>Аренда авто <span class="g">без водителя</span> в Астане</h1>
 <p class="lead">{len(CARS)} {plural(len(CARS))} — от Hyundai Accent до Mercedes G63. От {rub(MIN_PRICE)} в сутки, депозит {rub(DEPOSIT)} возвращаем сразу после возврата авто.</p>
 <div class="act"><a class="btn c" href="#park">{ic("car")}Выбрать машину</a><a class="btn k" href="{wa("Здравствуйте! Хочу арендовать авто.")}" target="_blank" rel="noopener">{WA_IC}Написать в WhatsApp</a></div></div>
 <nav class="hcls" aria-label="Классы машин"><p class="mo">Классы · цена за сутки</p>{rows}</nav>
@@ -276,9 +263,9 @@ def build_home():
 </div></section>
 '''
     body += f'''<section class="s gr" id="park"><div class="w"><div class="sh"><h2>Автопарк</h2><p>Цена за сутки. У каждой машины своя страница с фото и условиями.</p></div>{filters()}{cards(by_price, 4)}</div></section>
-<section class="s" id="usloviya"><div class="w"><div class="sh"><h2>Условия аренды</h2><p>Коротко и без мелкого шрифта. Подробнее — на странице <a href="/usloviya/">«Условия»</a>.</p></div>{terms_html()}</div></section>
+<section class="s lt" id="usloviya"><div class="w"><div class="sh"><h2>Условия аренды</h2><p>Коротко и без мелкого шрифта. Подробнее — на странице <a href="/usloviya/">«Условия»</a>.</p></div>{terms_html()}</div></section>
 <section class="s dk"><div class="w"><div class="sh"><h2>Как арендовать</h2><p>Без лишних бумаг: документы, оплата, депозит — и машина ваша.</p></div>{steps_html()}</div></section>
-<section class="s"><div class="w"><div class="sh"><h2>Вопросы</h2></div>{faq_html(FAQ)}</div></section>
+<section class="s lt"><div class="w"><div class="sh"><h2>Вопросы</h2></div>{faq_html(FAQ)}</div></section>
 {book()}
 {contacts_block()}'''
     items = {"@type": "ItemList", "name": "Автопарк", "itemListElement": [{"@type": "ListItem", "position": i + 1, "url": f"{SITE_URL}/avto/{c['slug']}/", "name": c["full"]} for i, c in enumerate(by_price)]}
@@ -288,7 +275,7 @@ def build_home():
 
 def contacts_block():
     maps = "https://www.google.com/maps/search/?api=1&query=" + urllib.request.quote(f"{BRAND} {ADDRESS}")
-    return f'''<section class="s" id="kontakty"><div class="w"><div class="sh"><h2>Контакты</h2><p>Перед приездом позвоните или напишите — подготовим машину и документы.</p></div>
+    return f'''<section class="s lt" id="kontakty"><div class="w"><div class="sh"><h2>Контакты</h2><p>Перед приездом позвоните или напишите — подготовим машину и документы.</p></div>
 <div class="ct"><div><span>Телефон</span><a class="v" href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a></div>
 <div><span>WhatsApp</span><a class="v" href="{wa("Здравствуйте! Хочу арендовать авто.")}" target="_blank" rel="noopener">Написать</a></div>
 <div><span>Адрес</span><a class="v" href="{maps}" target="_blank" rel="noopener">{E(STREET)}</a></div>
@@ -327,7 +314,7 @@ def build_cars():
                 ("Класс", cls_names(c)), ("Цена", f"{rub(c['price'])} / сутки"), ("Депозит", f"{rub(DEPOSIT)}, возвращается сразу"), ("Эксплуатация", "по Астане; за город — с доплатой")]
         spec = "".join(f"<tr><th scope=row>{E(a)}</th><td>{E(b)}</td></tr>" for a, b in rows)
         cr = [("Главная", "/"), ("Автопарк", "/avto/"), (CLS[cl]["name"], f"/klass/{cl}/"), (c["full"], path)]
-        body = f'''{crumbs(cr)}
+        body = f'''<div class="car-wrap">{crumbs(cr)}
 <section class="w car-top">
 <div class="gal"><div class="gal-m">{main}</div>{f'<div class="gal-t">{th}</div>' if th else ""}</div>
 <div class="info"><h1>Аренда {E(c["full"])} в Астане</h1><p class="lead">{E(c["about"])}</p>
@@ -335,10 +322,10 @@ def build_cars():
 <div class="act"><a class="btn c" href="#bron">{ic("key")}Забронировать</a><a class="btn k" href="{wa(f"Здравствуйте! Хочу арендовать {c['full']}.")}" target="_blank" rel="noopener">{WA_IC}WhatsApp</a></div>
 <table class="spec"><caption class="sr">Характеристики и условия</caption>{spec}</table>
 <ul class="fit" aria-label="Подходит для">{fit}</ul></div>
-</section>
-<section class="s gr" style="border-top:var(--b)"><div class="w"><div class="sh"><h2>Условия аренды</h2></div>{terms_html()}</div></section>
+</section></div>
+<section class="s"><div class="w"><div class="sh"><h2>Условия аренды</h2></div>{terms_html()}</div></section>
 {book(c)}
-<section class="s"><div class="w"><div class="sh"><h2>Вопросы о {E(c["name"])}</h2></div>{faq_html(car_faq(c))}</div></section>
+<section class="s lt"><div class="w"><div class="sh"><h2>Вопросы о {E(c["name"])}</h2></div>{faq_html(car_faq(c))}</div></section>
 <section class="s gr"><div class="w"><div class="sh"><h2>Похожие машины</h2><p><a href="/klass/{cl}/">Все машины класса «{CLS[cl]["name"]}» →</a></p></div><div class="cards">{"".join(card(x) for x in sim)}</div></div></section>'''
         prod = {"@type": "Product", "name": f"Аренда {c['full']} без водителя", "brand": {"@type": "Brand", "name": c["brand"]},
                 "description": c["about"], "category": "Аренда автомобилей",
@@ -367,7 +354,7 @@ def build_classes():
 <h2 class="sr">Машины класса «{k["name"]}»</h2><div class="flt" aria-label="Классы">{tabs}</div>{cards(lst, 4)}</div></section>
 <section class="s"><div class="w"><div class="sh"><h2>Условия аренды</h2></div>{terms_html()}</div></section>
 {book()}
-<section class="s"><div class="w"><div class="sh"><h2>Вопросы</h2></div>{faq_html(faq)}</div></section>'''
+<section class="s lt"><div class="w"><div class="sh"><h2>Вопросы</h2></div>{faq_html(faq)}</div></section>'''
         page(f"/klass/{k['slug']}/", f"{k['title']} — от {nb(lo)} ₸/сутки",
              f"{k['h1']} без водителя: {', '.join(c['short'] for c in lst[:3])}. От {nb(lo)} ₸ в сутки, депозит 20 000 ₸, с 20 лет.",
              body, "/avto/", [crumbs_ld(cr), faq_ld(faq)])
@@ -382,7 +369,7 @@ def build_prices():
 <table class="tbl"><thead><tr><th scope=col>Машина</th><th scope=col class="hm">Кузов</th><th scope=col class="hm">Класс</th><th scope=col>За сутки</th></tr></thead><tbody>{rows}</tbody></table></div></section>
 <section class="s gr"><div class="w"><div class="sh"><h2>Что входит и что нет</h2></div>{terms_html()}</div></section>
 {book()}
-<section class="s"><div class="w"><div class="sh"><h2>Вопросы о цене</h2></div>{faq_html(faq)}</div></section>'''
+<section class="s lt"><div class="w"><div class="sh"><h2>Вопросы о цене</h2></div>{faq_html(faq)}</div></section>'''
     page("/ceny/", f"Цены на аренду авто в Астане без водителя — от {nb(MIN_PRICE)} ₸ | {BRAND}",
          f"Прайс на аренду авто без водителя в Астане: {len(CARS)} машин от {nb(MIN_PRICE)} до {nb(lst[-1]['price'])} ₸ в сутки. Депозит 20 000 ₸, возвращается сразу.",
          body, "/ceny/", [crumbs_ld(cr), faq_ld(faq)])
@@ -390,9 +377,9 @@ def build_prices():
 def build_terms():
     cr = [("Главная", "/"), ("Условия", "/usloviya/")]
     body = f'''{crumbs(cr)}
-<section class="s" style="padding-top:24px"><div class="w"><div class="sh"><div><h1>Условия аренды</h1><p class="lead" style="margin-top:14px">Кто может взять машину, какие нужны документы, сколько депозит и куда можно ездить.</p></div></div>{terms_html()}</div></section>
+<section class="s" style="padding-top:24px"><div class="w"><div class="sh"><div><h1>Условия аренды</h1><p class="lead" style="margin-top:14px">Кто может взять машину, какие нужны документы, сколько депозит и куда можно ездить.</p></div></div><h2 class="sr">Основные условия</h2>{terms_html()}</div></section>
 <section class="s dk"><div class="w"><div class="sh"><h2>Как арендовать</h2></div>{steps_html()}</div></section>
-<section class="s"><div class="w"><div class="sh"><h2>Вопросы</h2></div>{faq_html(FAQ)}</div></section>
+<section class="s lt"><div class="w"><div class="sh"><h2>Вопросы</h2></div>{faq_html(FAQ)}</div></section>
 {book()}'''
     page("/usloviya/", "Условия аренды авто в Астане: с 20 лет, депозит 20 000 ₸",
          "Условия аренды авто без водителя в Астане: возраст от 20 лет, стаж от 2 лет, удостоверение и права, депозит 20 000 ₸ возвращается сразу. Не под такси.",
@@ -410,7 +397,7 @@ def build_contacts():
 
 def build_privacy():
     body = f'''{crumbs([("Главная", "/"), ("Политика конфиденциальности", "/privacy-policy/")])}
-<section class="s" style="padding-top:24px"><div class="w prose"><h1>Политика конфиденциальности</h1>
+<section class="s lt" style="padding-top:40px"><div class="w prose"><h1>Политика конфиденциальности</h1>
 <h2>Какие данные мы получаем</h2><p>Имя, номер телефона и даты аренды, которые вы указываете в форме бронирования или пишете в WhatsApp, а также вопросы в ИИ-чате.</p>
 <h2>Зачем</h2><p>Чтобы ответить на заявку, проверить, свободна ли машина, и оформить аренду. Мы не продаём и не передаём ваши данные третьим лицам, кроме случаев, предусмотренных законодательством Республики Казахстан.</p>
 <h2>Как отправляются данные</h2><p>Форма бронирования не хранит данные на сайте: заявка открывается в WhatsApp, и вы сами отправляете сообщение. Вопросы в ИИ-чате обрабатываются только для ответа и не используются для рекламы.</p>
@@ -427,7 +414,7 @@ def build_meta():
     (DIST / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
     sm = "".join(f"<url><loc>{SITE_URL}{p}</loc><changefreq>weekly</changefreq><priority>{'1.0' if p == '/' else '0.8' if p.startswith(('/avto/', '/klass/')) else '0.6'}</priority></url>" for p in SITEMAP)
     (DIST / "sitemap.xml").write_text(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{sm}</urlset>\n', encoding="utf-8")
-    (DIST / "site.webmanifest").write_text(json.dumps({"name": BRAND, "short_name": "TopAutorent", "start_url": "/", "display": "standalone", "background_color": "#0a0a0a", "theme_color": "#0a0a0a",
+    (DIST / "site.webmanifest").write_text(json.dumps({"name": BRAND, "short_name": "TOPRENT", "start_url": "/", "display": "standalone", "background_color": "#0a0a0a", "theme_color": "#0a0a0a",
         "icons": [{"src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png"}]}, ensure_ascii=False), encoding="utf-8")
     fleet = "\n".join(f"- {c['full']} — {nb(c['price'])} ₸/сутки; {c['body'].lower()}, {cls_names(c).lower()}: {SITE_URL}/avto/{c['slug']}/" for c in sorted(CARS, key=lambda c: c["price"]))
     terms = "\n".join(f"- {h}: {p}" for _, h, p in TERMS) + "\n" + "\n".join(f"- {x}" for x in RULES)

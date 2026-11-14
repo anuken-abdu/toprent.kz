@@ -9,16 +9,16 @@ ROOT = Path(__file__).resolve().parent.parent; A = ROOT / "assets"
 nb = lambda n: f"{n:,}".replace(",", " ")
 font = lambda f: (A / "fonts" / f).as_uri()
 OG = f"""<html><head><style>
-@font-face{{font-family:U;src:url({font('unbounded-cyrillic-800-normal.woff2')})}}@font-face{{font-family:U;src:url({font('unbounded-latin-800-normal.woff2')});unicode-range:U+0000-00FF}}
+@font-face{{font-family:U;src:url({font('inter-tight-cyrillic-800-normal.woff2')})}}@font-face{{font-family:U;src:url({font('inter-tight-latin-800-normal.woff2')});unicode-range:U+0000-00FF}}
 @font-face{{font-family:M;src:url({font('jetbrains-mono-cyrillic-500-normal.woff2')})}}@font-face{{font-family:M;src:url({font('jetbrains-mono-latin-500-normal.woff2')});unicode-range:U+0000-00FF}}
-body{{margin:0;width:1200px;height:630px;background:#0a0a0a;color:#fff;font-family:U;position:relative;overflow:hidden}}
-.b{{position:absolute;inset:28px;border:4px solid #fff}}
-.t{{position:absolute;left:72px;top:70px;font-family:M;font-size:26px;color:#00e5ff}}
-h1{{position:absolute;left:68px;top:120px;margin:0;font-size:92px;line-height:1.02;text-transform:uppercase;letter-spacing:-1px}}
-h1 i{{font-style:normal;color:transparent;-webkit-text-stroke:3px #00e5ff}}
-.f{{position:absolute;left:72px;right:72px;bottom:72px;display:flex;border:4px solid #fff;font-family:M;font-size:26px}}
-.f div{{flex:1;padding:18px 22px;border-right:4px solid #fff}}.f div:last-child{{border-right:0;background:#00e5ff;color:#0a0a0a}}
-</style></head><body><div class="b"></div><div class="t">{BRAND} · {CITY}</div>
+body{{margin:0;width:1200px;height:630px;background:#0d0d0d;color:#fff;font-family:U;position:relative;overflow:hidden}}
+.t{{position:absolute;left:72px;top:64px;font-family:M;font-size:22px;letter-spacing:2px;text-transform:uppercase;color:#8e8e8e;display:flex;align-items:center;gap:16px}}
+.t:before{{content:"";width:16px;height:16px;background:#00e5ff}}
+h1{{position:absolute;left:68px;top:132px;margin:0;font-size:118px;line-height:.9;text-transform:uppercase;letter-spacing:-5px}}
+h1 i{{font-style:normal;color:#6f6f6f}}
+.f{{position:absolute;left:72px;right:72px;bottom:64px;display:flex;border-top:3px solid #fff;font-family:U;font-size:34px;letter-spacing:-1px}}
+.f div{{flex:1;padding:22px 0 0}}.f div+div{{border-left:1px solid #2c2c2c;padding-left:28px}}
+</style></head><body><div class="t">{BRAND} · {CITY}</div>
 <h1>Аренда авто<br><i>без водителя</i></h1>
 <div class="f"><div>от {nb(MIN_PRICE)} ₸/сутки</div><div>депозит {nb(DEPOSIT)} ₸</div><div>{PHONE_DISPLAY}</div></div></body></html>"""
 with sync_playwright() as p:
