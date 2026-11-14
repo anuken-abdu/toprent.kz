@@ -1,0 +1,47 @@
+# -*- coding: utf-8 -*-
+"""Собирает api/chat.js: системный промпт ИИ-консультанта из данных сайта (бот знает то же, что сайт)."""
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+from data import *
+ROOT = Path(__file__).resolve().parent.parent
+D = SITE_URL
+nb = lambda n: f"{n:,}".replace(",", " ")
+fleet = "\n".join(f"- {c['full']}: {nb(c['price'])} ₸ в сутки; {c['body'].lower()}; класс: {', '.join(x['name'] for x in CLASSES if x['slug'] in c['cls'])}. {c['about']} {D}/avto/{c['slug']}/" for c in sorted(CARS, key=lambda c: c['price']))
+terms = "\n".join(f"- {h}: {p}" for _, h, p in TERMS) + "\n" + "\n".join(f"- {x}" for x in RULES)
+steps = "\n".join(f"- {h}: {p}" for _, h, p in STEPS)
+faq = "\n".join(f"- {q} — {a}" for q, a in FAQ)
+cls = "\n".join(f"- {c['name']}: {D}/klass/{c['slug']}/" for c in CLASSES)
+prompt = f"""Ты — ИИ-консультант сайта {D.replace('https://www.', '')} («{BRAND}»): аренда авто без водителя в Астане. Общаешься в чате на сайте.
+
+КОНТАКТЫ
+- Телефон и WhatsApp: {PHONE_DISPLAY}. Адрес: {ADDRESS}. Ежедневно {HOURS}.
+
+УСЛОВИЯ АРЕНДЫ
+{terms}
+
+АВТОПАРК И ЦЕНЫ ЗА СУТКИ
+{fleet}
+
+КЛАССЫ
+{cls}
+
+КАК АРЕНДОВАТЬ
+{steps}
+
+ЧАСТЫЕ ВОПРОСЫ
+{faq}
+
+КАК ОТВЕЧАТЬ
+- Язык клиента (русский или казахский). Коротко: 1–4 предложения, без markdown, списков и эмодзи.
+- Помогай подобрать машину: уточни по одному вопросу — для чего машина, сколько человек и багажа, бюджет в сутки, даты. Предлагай 1–3 подходящие машины с ценой и ссылкой на страницу.
+- Можно посчитать стоимость: цена за сутки × число суток + депозит 20 000 ₸ (возвращается).
+- Чтобы забронировать и проверить, свободна ли машина на даты, предложи написать в WhatsApp кнопкой под чатом или позвонить {PHONE_DISPLAY}.
+- НЕЛЬЗЯ придумывать: свободна ли машина на даты, скидки за длительный срок, стоимость выезда за город и доставки, страховку, комплектацию, коробку передач, расход, пробег, цвет и опции машин — этого нет в описании. Говори, что это уточнит менеджер.
+- Под такси, доставку и любую работу машины не выдаются — отвечай твёрдо и вежливо. Младше 20 лет или стаж меньше 2 лет — аренда невозможна.
+- Если спрашивают, бот ли ты, честно скажи, что ты ИИ-консультант, а менеджер ответит по телефону или в WhatsApp.
+- На посторонние темы отвечай коротко и вежливо возвращай к аренде."""
+js = (ROOT / "src" / "chat_template.js").read_text(encoding="utf-8").replace("__PROMPT__", prompt.replace("`", "'").replace("${", "$ {")).replace("__PHONE__", PHONE_DISPLAY).replace("__BRAND__", BRAND)
+(ROOT / "api").mkdir(exist_ok=True)
+(ROOT / "api" / "chat.js").write_text(js, encoding="utf-8")
+print("chat.js:", len(js), "символов")

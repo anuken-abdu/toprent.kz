@@ -1,0 +1,10 @@
+{
+  "buildCommand": "python3 src/build.py",
+  "installCommand": "",
+  "outputDirectory": "dist",
+  "trailingSlash": true,
+  "headers": [
+    { "source": "/assets/fonts/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
+    { "source": "/img/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }] }
+  ]
+}
