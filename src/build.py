@@ -91,7 +91,7 @@ def faq_ld(faq):
 
 NAV = [("Автопарк", "/avto/"), ("Цены", "/ceny/"), ("Условия", "/usloviya/"), ("Статьи", "/stati/"), ("Контакты", "/kontakty/")]
 POLICY = "/politika/"
-LOGO = '<b>TOP</b>RENT<i></i>'
+LOGO = '<b>TOP</b>RENT'
 
 def header(cur):
     sub = "".join(f'<a href="/klass/{c["slug"]}/">{c["name"]}<span>от {rub(min(x["price"] for x in CARS if c["slug"] in x["cls"]))}</span></a>' for c in CLASSES)
@@ -356,7 +356,8 @@ def build_cars():
         msg = f"Здравствуйте! Хочу арендовать {c['full']}."
         body = f"""<div class="car-wrap">{crumbs(cr)}
 <section class="w car-top">
-<div class="gal"><div class="gal-m">{main}</div>{f'<div class="gal-t">{th}</div>' if th else ""}</div>
+<div class="gal-c"><div class="gal"><div class="gal-m">{main}</div>{f'<div class="gal-t">{th}</div>' if th else ""}</div>
+<aside class="fact"><b>Интересный факт</b><p>{E(FACTS[c["slug"]])}</p></aside></div>
 <div class="info"><h1>Аренда {E(c["full"])} в Астане</h1><p class="lead">{E(c["about"])}</p>
 <div class="price"><div class="c1"><b>{rub(c["price"])}</b><span>в сутки</span></div><div><b>{rub(DEPOSIT)}</b><span>депозит, вернём сразу</span></div></div>
 <div class="act"><a class="btn c" href="#bron">{ic("key")}Забронировать</a><a class="btn" href="{wa(msg)}" target="_blank" rel="noopener">{WA_IC}WhatsApp</a></div>

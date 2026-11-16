@@ -7,7 +7,7 @@ from data import *
 ROOT = Path(__file__).resolve().parent.parent
 D = SITE_URL
 nb = lambda n: f"{n:,}".replace(",", " ")
-fleet = "\n".join(f"- [[{c['slug']}]] {c['full']}: {nb(c['price'])} ₸ в сутки; {c['body'].lower()}; класс: {', '.join(x['name'] for x in CLASSES if x['slug'] in c['cls'])}. {c['about']} {D}/avto/{c['slug']}/" for c in sorted(CARS, key=lambda c: c['price']))
+fleet = "\n".join(f"- [[{c['slug']}]] {c['full']}: {nb(c['price'])} ₸ в сутки; {c['body'].lower()}; класс: {', '.join(x['name'] for x in CLASSES if x['slug'] in c['cls'])}. {c['about']} Интересный факт: {FACTS[c['slug']]} {D}/avto/{c['slug']}/" for c in sorted(CARS, key=lambda c: c['price']))
 terms = "\n".join(f"- {h}: {p}" for _, h, p in TERMS) + "\n" + "\n".join(f"- {x}" for x in RULES)
 steps = "\n".join(f"- {h}: {p}" for _, h, p in STEPS)
 faq = "\n".join(f"- {q} — {a}" for q, a in FAQ)
