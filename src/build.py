@@ -127,16 +127,16 @@ def footer():
 </div></footer>'''
 
 def flo():
-    q = "".join(f"<button type=button>{x}</button>" for x in ["Какие нужны документы?", "Какой депозит?", "Можно за город?", "Цены"])
+    q = "".join(f'<button type=button data-cls="{c["slug"]}">{c["name"]}</button>' for c in CLASSES) + "".join(f"<button type=button>{x}</button>" for x in ["Какие нужны документы?", "Какой депозит?"])
     return f'''<div class="flo">
 <a class="sm" href="/" data-back aria-label="Назад" title="Назад">{ic("back")}</a>
 <button class="sm" type="button" data-top hidden aria-label="Наверх" title="Наверх">{ic("up")}</button>
 <div class="flo-p" id="flop" hidden>
+<button type="button" data-chat>{ROBOT}<span>ИИ-консультант<small>фото и цены машин</small></span></button>
 <a href="{wa("Здравствуйте! Хочу арендовать авто.")}" target="_blank" rel="noopener">{WA_IC}<span>WhatsApp<small>ответим в чате</small></span></a>
 <a href="tel:{PHONE_TEL}">{ic("phone")}<span>Позвонить<small>{PHONE_DISPLAY}</small></span></a>
-<button type="button" data-chat>{ROBOT}<span>ИИ-консультант<small>ответит сразу</small></span></button>
 </div>
-<button class="flo-m" type="button" aria-label="Связаться: WhatsApp, звонок, ИИ-чат" aria-expanded="false" aria-controls="flop">{ROBOT}</button>
+<button class="flo-m" type="button" aria-label="Связаться: ИИ-консультант, WhatsApp, звонок" aria-expanded="false" aria-controls="flop"><img src="/assets/img/sale-0.webp" data-anim="/assets/img/sale.webp" width="60" height="60" alt="" decoding="async"></button>
 </div>
 <template id="chat-t"><section class="chat" id="chat" aria-label="ИИ-консультант">
 <div class="chat-h"><span class="av">{ROBOT}</span><span><b>ИИ-консультант</b><small>машины, цены, условия</small></span><button type="button" data-chat-x aria-label="Закрыть чат">{ic("x")}</button></div>
@@ -299,7 +299,7 @@ def build_home():
 {vis}
 <div class="facts"><div><b>от 20 лет</b><span>возраст водителя</span></div><div><b>от 2 лет</b><span>водительский стаж</span></div><div><b>{rub(DEPOSIT)}</b><span>депозит, вернём сразу</span></div><div><b>{HOURS}</b><span>ежедневно</span></div></div>
 </div></section>
-<section class="s gr" id="park"><div class="w"><div class="sh"><h2>Автопарк</h2><p>Цена за сутки. У каждой машины своя страница с фото и условиями.</p></div>{filters()}{cards(by_price, 4)}</div></section>
+<section class="s gr" id="park"><div class="w"><div class="sh"><h2>Автопарк</h2><p>Цена за сутки. У каждой машины своя страница с фото и условиями.</p></div>{filters()}{cards(by_price)}</div></section>
 <section class="s lt" id="usloviya"><div class="w"><div class="sh"><h2>Условия аренды</h2><p>Коротко и без мелкого шрифта. Подробнее — на странице <a href="/usloviya/">«Условия»</a>.</p></div>{terms_html()}</div></section>
 <section class="s"><div class="w"><div class="sh"><h2>Как арендовать</h2><p>Без лишних бумаг: документы, оплата, депозит — и машина ваша.</p></div>{steps_html()}</div></section>
 <section class="s lt"><div class="w"><div class="sh"><h2>Вопросы</h2></div>{faq_html(FAQ)}</div></section>
@@ -560,6 +560,12 @@ def build_meta():
 """
     (DIST / "llms.txt").write_text(llms, encoding="utf-8")
 
+def build_chat_cars():
+    """/assets/cars.json — машины для карточек в ИИ-чате; грузится только при открытии чата."""
+    out = [{"s": c["slug"], "n": c["full"], "p": c["price"], "u": f"/avto/{c['slug']}/", "i": c["ph"][0] if c["ph"] else "",
+            "c": c["cls"], "y": c["year"] or 0, "k": CHAT_ALIASES.get(c["model"], c["model"].lower())} for c in sorted(CARS, key=lambda x: x["price"])]
+    (DIST / "assets" / "cars.json").write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+
 def main():
     if DIST.exists(): shutil.rmtree(DIST)
     DIST.mkdir()
@@ -570,7 +576,7 @@ def main():
     for c in CARS:
         c["ph"] = photos(c); got += len(c["ph"])
     build_home(); build_park(); build_cars(); build_classes(); build_prices(); build_terms(); build_districts(); build_articles()
-    build_contacts(); build_privacy(); build_404(); build_meta()
+    build_contacts(); build_privacy(); build_404(); build_meta(); build_chat_cars()
     print("страниц:", len(SITEMAP) + 1, "фото:", got)
     for p, t, d in LONG: print(f"  длинный title/description: {p} title={t} desc={d}")
 

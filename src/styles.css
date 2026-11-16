@@ -255,7 +255,7 @@ p{margin:0}
 .flo .sm svg{width:18px;height:18px;stroke-width:1.7}
 .flo .sm[hidden]{display:none}
 .flo-m{width:60px;height:60px;border:1px solid rgba(0,229,255,.45);border-radius:50%;background:#0f1113;color:var(--tx);display:grid;place-items:center;cursor:pointer;padding:0;box-shadow:0 0 0 6px rgba(0,229,255,.06),0 16px 36px rgba(0,0,0,.55);transition:color .2s,border-color .2s}
-.flo-m svg{width:36px;height:36px}
+.flo-m{background:#fff;overflow:hidden}.flo-m img{width:100%;height:100%;display:block;border-radius:50%;object-fit:cover}
 .flo-m:hover,.flo-m[aria-expanded=true]{color:var(--c);border-color:var(--c)}
 .flo-p{position:absolute;right:72px;bottom:0;width:270px;padding:6px;border:1px solid var(--ln2);border-radius:20px;background:rgba(16,17,19,.96);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:var(--tx);box-shadow:0 24px 60px rgba(0,0,0,.6)}
 .flo-p[hidden]{display:none}
@@ -275,13 +275,13 @@ p{margin:0}
 .chat-h button{width:40px;height:40px;border:1px solid var(--ln2);border-radius:50%;background:none;color:var(--tx);cursor:pointer;display:grid;place-items:center}
 .chat-h button:hover{border-color:var(--tx)}
 .chat-h button svg{width:16px;height:16px;stroke-width:1.7}
-.chat-l{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.chat-l{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}.chat-l>*{flex-shrink:0}
 .msg{max-width:86%;padding:11px 14px;font-size:15px;line-height:1.5;background:var(--s3);border-radius:16px 16px 16px 4px;white-space:pre-wrap;word-wrap:break-word}
 .msg.u{align-self:flex-end;background:var(--tx);color:var(--ink);border-radius:16px 16px 4px 16px}
 .msg.t{color:var(--mu);font-size:13px;background:none;padding-left:4px}
-.chat-q{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 10px}
-.chat-q button{font-size:13px;padding:7px 12px;border:1px solid var(--ln2);border-radius:999px;background:none;color:var(--mu);cursor:pointer;transition:color .2s,border-color .2s}
-.chat-q button:hover{border-color:var(--tx);color:var(--tx)}
+.chat-q{display:flex;gap:6px;padding:0 16px 10px;overflow-x:auto;scrollbar-width:none}.chat-q::-webkit-scrollbar{display:none}
+.chat-q button{flex-shrink:0;white-space:nowrap;font-size:13px;padding:7px 12px;border:1px solid var(--ln2);border-radius:999px;background:none;color:var(--mu);cursor:pointer;transition:color .2s,border-color .2s}
+.chat-q button:hover{border-color:var(--tx);color:var(--tx)}.chat-q [data-cls]{color:var(--tx)}
 .chat-f{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--ln)}
 .chat-f input{flex:1;min-width:0;min-height:48px;padding:8px 16px;border:1px solid var(--ln2);border-radius:999px;font-size:16px;background:var(--bg);color:var(--tx)}
 .chat-f input:focus{outline:none;border-color:var(--c)}
@@ -369,3 +369,19 @@ h1,h2{line-height:1.15}.hero h1{line-height:1.12}}
 .drawer nav{flex:1}.drawer nav a{font-size:20px;padding:11px 0}
 .drawer .d-bt{position:sticky;bottom:0;background:var(--bg);padding:14px 0 calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--ln);margin-top:16px}
 .drawer .d-bt .d-ct{margin-top:0}}
+
+.msg-c{display:flex;gap:10px;margin-top:-2px}
+.msg-c.many{overflow-x:auto;scroll-snap-type:x mandatory;margin-right:-16px;padding-right:16px;padding-bottom:4px;scrollbar-width:thin}
+.cc{flex:0 0 100%;max-width:100%;background:var(--s2);border:1px solid var(--ln2);border-radius:16px;overflow:hidden;scroll-snap-align:start}
+.msg-c.many .cc{flex-basis:78%}
+.cc-i{display:block;aspect-ratio:3/2;background:var(--s3)}
+.cc-i img{width:100%;height:100%;object-fit:cover;display:block}
+.cc-i span{display:grid;place-items:center;height:100%;color:var(--mu);font-size:15px}
+.cc-b{padding:10px 12px 12px}
+.cc-b b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-b>span{display:block;font-size:14px;color:var(--c);margin-top:2px;white-space:nowrap}
+.cc-a{display:flex;gap:6px;margin-top:10px}
+.cc-a a{flex:1;text-align:center;font-size:13px;font-weight:600;padding:8px 6px;border-radius:999px;border:1px solid var(--ln2);text-decoration:none;color:var(--tx);white-space:nowrap;transition:border-color .2s,color .2s}
+.cc-a a:first-child{background:var(--tx);color:var(--ink);border-color:var(--tx)}
+.cc-a a:hover{border-color:var(--c);color:var(--c)}
+.cc-a a:first-child:hover{background:var(--c);border-color:var(--c);color:var(--ink)}
