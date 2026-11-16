@@ -37,7 +37,7 @@ def main():
         done += 1
     print(f"фото обработано: {done}" + (f"; пропущены (имя не по коду машины): {', '.join(skipped)}" if skipped else ""))
 
-HERO_SIZES = {"pc": (1920, 1080), "mob": (900, 1600)}
+HERO_SIZES = {"pc": (1600, 900), "mob": (720, 660)}   # на телефоне фото — блок над текстом, нужна полоса с машиной
 def hero():
     src, out = ROOT / "orig" / "hero", ROOT / "assets" / "img" / "hero"
     if not src.exists(): return
@@ -51,9 +51,9 @@ def hero():
         tw, th = HERO_SIZES[d]
         with Image.open(f) as im:
             im = ImageOps.exif_transpose(im).convert("RGB")
-            im = ImageOps.fit(im, (tw, th), Image.LANCZOS, centering=(0.5, 0.5))   # кадр под экран, лишнее по краям обрезается
+            im = ImageOps.fit(im, (tw, th), Image.LANCZOS, centering=(0.5, 0.5 if d == "pc" else 0.44))   # кадр под экран, лишнее по краям обрезается
             clean = Image.new("RGB", im.size); clean.paste(im)                    # без EXIF и геолокации
-            clean.save(out / f"{key}.webp", "WEBP", quality=78, method=6)
+            clean.save(out / f"{key}.webp", "WEBP", quality=78 if d == "pc" else 74, method=6)
         print(f"фон {key}.webp: {(out / f'{key}.webp').stat().st_size // 1024} КБ")
 
 if __name__ == "__main__":

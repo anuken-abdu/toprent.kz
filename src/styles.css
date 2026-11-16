@@ -392,3 +392,24 @@ p{margin:0}
 @media (max-width:420px){.price{grid-template-columns:minmax(0,1fr)}.price div+div{border-left:0;border-top:1px solid var(--ln)}
 .btn{padding:0 20px}.act .btn{flex:1 1 100%}}
 @media (max-width:599px){h1,h2{line-height:1.14}}
+
+/* ---------- фон главной из ваших фото: слева на фото уже есть место под текст — затемнение мягче ---------- */
+.hero.hph .hero-bg::after{background:linear-gradient(90deg,rgba(255,255,255,.62) 0%,rgba(255,255,255,.25) 38%,rgba(255,255,255,0) 60%)}
+:root[data-theme=dark] .hero.hph .hero-bg::after{background:linear-gradient(90deg,rgba(5,5,6,.6) 0%,rgba(5,5,6,.25) 38%,rgba(5,5,6,0) 60%)}
+@media (max-width:767px){.hero.hph .hero-bg::after{background:linear-gradient(0deg,rgba(255,255,255,.97) 0%,rgba(255,255,255,.9) 42%,rgba(255,255,255,.35) 62%,rgba(255,255,255,0) 78%)}
+:root[data-theme=dark] .hero.hph .hero-bg::after{background:linear-gradient(0deg,rgba(5,5,6,.96) 0%,rgba(5,5,6,.88) 42%,rgba(5,5,6,.3) 62%,rgba(5,5,6,0) 78%)}}
+/* ---------- узоры секций: свои для дневной и ночной темы; грузятся, когда секция подходит к экрану (класс .pin) ---------- */
+.pin.gr,.pin.bk,.pin#usloviya{background-repeat:no-repeat;background-position:0 0;background-size:100% 22.3vw,100% auto}
+.pin.gr{background-image:linear-gradient(180deg,rgba(243,244,246,.4) 0%,var(--s1) 100%),url(/assets/img/uzor/day-2.webp)}
+.pin.gr~.pin.gr{background-image:linear-gradient(180deg,rgba(243,244,246,.4) 0%,var(--s1) 100%),url(/assets/img/uzor/day-3.webp)}
+.pin.bk,.pin#usloviya{background-image:linear-gradient(180deg,rgba(243,244,246,.4) 0%,var(--s1) 100%),url(/assets/img/uzor/day-1.webp)}
+.pin#usloviya{background-image:linear-gradient(180deg,rgba(243,244,246,.4) 0%,var(--s1) 100%),url(/assets/img/uzor/day-3.webp)}
+:root[data-theme=dark] .pin.gr{background-image:linear-gradient(180deg,rgba(11,12,14,.35) 0%,var(--s1) 100%),url(/assets/img/uzor/night-1.webp)}
+:root[data-theme=dark] .pin.gr~.pin.gr,:root[data-theme=dark] .pin.bk,:root[data-theme=dark] .pin#usloviya{background-image:linear-gradient(180deg,rgba(11,12,14,.35) 0%,var(--s1) 100%),url(/assets/img/uzor/night-2.webp)}
+@media (min-width:768px){.hero.hph h1{max-width:min(820px,46vw)}.hero.hph .lead{max-width:min(480px,34vw)}}
+/* телефон: фото отдельным блоком сверху, текст под ним — машину видно, текст читается */
+@media (max-width:767px){.hero.hph{display:block;min-height:0;background:var(--bg)}
+.hero.hph .hero-bg{position:relative;height:88vw;max-height:520px;background-position:50% 50%}
+.hero.hph .hero-bg::after,:root[data-theme=dark] .hero.hph .hero-bg::after{background:linear-gradient(0deg,var(--bg) 0%,rgba(0,0,0,0) 30%)}
+.hero.hph .hero-in{padding-top:4px;padding-bottom:30px}
+.hero.hph .hero-r li{background:var(--s2)}}

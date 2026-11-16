@@ -11,7 +11,7 @@ from i18n import TR, CHAT_T
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
-VER = "1711263"
+VER = "1711264"
 E = html.escape
 CLS = {c["slug"]: c for c in CLASSES}
 nb = lambda n: f"{n:,}".replace(",", " ")
@@ -357,22 +357,23 @@ def hero():
             for k in (f"{d}-{t}", f"{d}-{'night' if t == 'day' else 'day'}", f"{'mob' if d == 'pc' else 'pc'}-{t}"):
                 if have.get(k): return f"/assets/img/hero/{k}.webp"
             return next(f"/assets/img/hero/{k}.webp" for k, v in have.items() if v)
-        css = (f".hero-bg{{background:#e9ebee url({pick('mob', 'day')}) center/cover no-repeat}}"
-               f":root[data-theme=dark] .hero-bg{{background:#08090b url({pick('mob', 'night')}) center/cover no-repeat}}"
-               f"@media (min-width:768px){{.hero-bg{{background-image:url({pick('pc', 'day')})}}:root[data-theme=dark] .hero-bg{{background-image:url({pick('pc', 'night')})}}}}")
+        css = (f".hero-bg{{background:#e9ebee url({pick('mob', 'day')}) 50% 50%/cover no-repeat}}"
+               f":root[data-theme=dark] .hero-bg{{background:#08090b url({pick('mob', 'night')}) 50% 50%/cover no-repeat}}"
+               f"@media (min-width:768px){{.hero-bg{{background-image:url({pick('pc', 'day')});background-position:72% 50%}}:root[data-theme=dark] .hero-bg{{background-image:url({pick('pc', 'night')});background-position:72% 50%}}}}")
         js = ("<script>(function(){var n=document.documentElement.dataset.theme==='dark',m=window.matchMedia&&matchMedia('(max-width: 767px)').matches,"
               f"u=n?(m?'{pick('mob', 'night')}':'{pick('pc', 'night')}'):(m?'{pick('mob', 'day')}':'{pick('pc', 'day')}'),"
               "l=document.createElement('link');l.rel='preload';l.as='image';l.href=u;l.setAttribute('fetchpriority','high');document.head.appendChild(l)})()</script>\n")
-        bg, pre = "", f"<style>{css}</style>\n{js}"
+        bg, pre, ph = "", f"<style>{css}</style>\n{js}", " hph"
     else:
         p = f"/assets/img/cars/{HERO_CAR}-1"
         bg = f'<img src="{p}-800.webp" srcset="{srcset(p)}" sizes="100vw" alt="" width="1200" height="800" fetchpriority="high" decoding="async">'
         pre = f'<link rel="preload" as="image" href="{p}-800.webp" imagesrcset="{srcset(p)}" imagesizes="100vw" fetchpriority="high">\n'
+        ph = ""
     rules = [("taxi", T("Только для личных поездок"), T("Не под такси, доставку и перевозки")),
              ("age", T("С 20 лет и стажем от 2 лет"), T("Нужны удостоверение и права")),
              ("dep", T("Депозит {dep}").format(dep=rub(DEPOSIT)), T("Вернём сразу после возврата авто"))]
     lis = "".join(f"<li><b>{h}</b><span>{p}</span></li>" for k, h, p in rules)
-    html_ = f"""<section class="hero"><div class="hero-bg" role="img" aria-label="{E(T("Аренда авто без водителя в Астане"))}">{bg}</div>
+    html_ = f"""<section class="hero{ph}"><div class="hero-bg" role="img" aria-label="{E(T("Аренда авто без водителя в Астане"))}">{bg}</div>
 <div class="w hero-in"><h1>{T("Аренда авто без водителя в Астане")}</h1>
 <p class="lead">{T("{n} — от Hyundai Accent до Mercedes G63, от {p} в сутки. Машины выдаём только для личных поездок.").format(n=cars_n(len(CARS)), p=rub(MIN_PRICE))}</p>
 <ul class="hero-r">{lis}</ul>

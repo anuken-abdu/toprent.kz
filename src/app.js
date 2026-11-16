@@ -39,6 +39,13 @@
   document.addEventListener("click", function (e) { langs.forEach(function (d) { if (d.open && !d.contains(e.target)) d.open = false; }); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") langs.forEach(function (d) { d.open = false; }); });
 
+  /* ---------- узоры секций: подгружаем, когда секция подходит к экрану ---------- */
+  var pats = $$(".gr, .bk, #usloviya");
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("pin"); io.unobserve(e.target); } }); }, { rootMargin: "400px 0px" });
+    pats.forEach(function (x) { io.observe(x); });
+  } else pats.forEach(function (x) { x.classList.add("pin"); });
+
   /* ---------- фильтр и сортировка автопарка ---------- */
   var grid = $("[data-grid]");
   if (grid) {
