@@ -23,11 +23,13 @@
   }
 
   /* ---------- дневной / ночной режим (выбор запоминается) ---------- */
-  var root = document.documentElement;
+  var root = document.documentElement, tcm = $('meta[name="theme-color"]');
+  var paint = function () { if (tcm) tcm.content = root.dataset.theme === "dark" ? "#050506" : "#ffffff"; };
+  paint();
   $$("[data-theme-t]").forEach(function (b) {
     b.addEventListener("click", function () {
-      var t = root.dataset.theme === "light" ? "dark" : "light";
-      root.dataset.theme = t;
+      var t = root.dataset.theme === "dark" ? "light" : "dark";
+      root.dataset.theme = t; paint();
       try { localStorage.setItem("theme", t); } catch (e) {}
     });
   });
@@ -182,7 +184,7 @@
     list.appendChild(box); scroll();
   };
   /* карточки машин: фото, цена за сутки, бронь в WhatsApp, страница машины */
-  var cards = function (cars) {
+  var carCards = function (cars) {
     var box = document.createElement("div"); box.className = "msg-c" + (cars.length > 1 ? " many" : "");
     cars.forEach(function (c) {
       var el = document.createElement("div"); el.className = "cc";
@@ -230,7 +232,7 @@
   };
   var reply = function (t, cs) {
     add(t); hist.push({ role: "assistant", content: t });
-    if (cs && cs.length) cards(cs); else actions();
+    if (cs && cs.length) carCards(cs); else actions();
   };
   var ask = function (q) {
     q = (q || "").trim(); if (!q) return;

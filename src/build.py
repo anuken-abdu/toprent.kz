@@ -11,7 +11,7 @@ from i18n import TR, CHAT_T
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
-VER = "1611262"
+VER = "1711262"
 E = html.escape
 CLS = {c["slug"]: c for c in CLASSES}
 nb = lambda n: f"{n:,}".replace(",", " ")
@@ -95,7 +95,7 @@ def minify_css(s):
     return re.sub(r"\s*([{};,>])\s*", r"\1", s).replace(";}", "}")
 CSS = minify_css((ROOT / "src" / "styles.css").read_text(encoding="utf-8"))
 THEME_JS = ("<script>(function(){var d=document.documentElement,t;try{t=localStorage.getItem('theme')}catch(e){}"
-            "if(t!=='light'&&t!=='dark')t=window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';d.dataset.theme=t})()</script>")
+            "if(t!=='light'&&t!=='dark')t='light';d.dataset.theme=t})()</script>")
 
 def conv_js():
     """Код события конверсии по инструкции Google + защита от блокировщиков (done + 800 мс)."""
@@ -138,7 +138,7 @@ def lang_menu(path, cls=""):
     return f'<details class="lang {cls}"><summary aria-label="{cur[2]} — {E(T("Язык"))}: {cur[1]}">{ic("globe")}<span>{cur[2]}</span></summary><div class="lang-m">{items}</div></details>'
 
 def theme_btn(cls=""):
-    return f'<button class="thm {cls}" type="button" data-theme-t aria-label="{E(T("Дневной или ночной режим"))}"><span class="t-l">{ic("sun")}<i>{T("Дневной")}</i></span><span class="t-d">{ic("moon")}<i>{T("Ночной")}</i></span></button>'
+    return f'<button class="thm {cls}" type="button" data-theme-t aria-label="{E(T("Дневной или ночной режим"))}" title="{E(T("Дневной или ночной режим"))}">{ic("moon")}{ic("sun")}</button>'
 
 def header(cur, path):
     sub = "".join(f'<a href="{U("/klass/" + c["slug"] + "/")}">{T(c["name"])}<span>{T("от")} {rub(min(x["price"] for x in CARS if c["slug"] in x["cls"]))}</span></a>' for c in CLASSES)
@@ -154,14 +154,13 @@ def header(cur, path):
 <header class="hd"><div class="w">
 <a class="logo" href="{U("/")}" aria-label="TOPRENT — {E(T("на главную"))}">{LOGO}</a>
 <nav class="nav" aria-label="{E(T("Главное меню"))}">{nav}</nav>
-<div class="hd-r">{theme_btn("hd-thm")}{lang_menu(path)}
+<div class="hd-r">{lang_menu(path)}{theme_btn()}
 <a class="hd-tel" href="tel:{PHONE_TEL}">{PHONE_DISPLAY}</a>
 <a class="hd-ic" href="tel:{PHONE_TEL}" aria-label="{E(T("Позвонить"))} {PHONE_DISPLAY}">{ic("phone")}</a>
 <button class="burger" type="button" aria-label="{E(T("Открыть меню"))}" aria-expanded="false" aria-controls="drawer">{ic("menu")}<span>{T("Меню")}</span></button></div>
 </div></header>
 <div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="{E(T("Меню"))}"><div class="d-p">
 <div class="x"><a class="logo" href="{U("/")}">{LOGO}</a><button type="button" data-close aria-label="{E(T("Закрыть меню"))}">{ic("x")}</button></div>
-<div class="d-set">{theme_btn("d-thm")}</div>
 <nav aria-label="{E(T("Меню"))}">{dnav}</nav>
 <div class="d-bt"><div class="d-ct"><a class="btn c" href="tel:{PHONE_TEL}">{ic("phone")}{T("Позвонить")}</a><a class="btn" href="{wa(hello())}" target="_blank" rel="noopener">{WA_IC}WhatsApp</a></div>
 <p class="dh">{PHONE_DISPLAY} · {T("ежедневно")} {HOURS}</p></div>
@@ -223,8 +222,8 @@ def page(path, title, desc, body, cur="", ld=None, preload=None, og=None, noinde
 <meta name="description" content="{E(desc)}">
 <link rel="canonical" href="{url}">
 {alts}{'<meta name="robots" content="noindex,follow">' if noindex else '<meta name="robots" content="index,follow,max-image-preview:large">'}
-<meta name="theme-color" content="#060607" media="(prefers-color-scheme: dark)"><meta name="theme-color" content="#cdd1d6" media="(prefers-color-scheme: light)">
-<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#ffffff">
+<meta name="color-scheme" content="light dark">
 <meta property="og:type" content="{og_type}"><meta property="og:locale" content="{loc}"><meta property="og:site_name" content="{BRAND}">
 <meta property="og:title" content="{E(title)}"><meta property="og:description" content="{E(desc)}"><meta property="og:url" content="{url}"><meta property="og:image" content="{og_img}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{E(title)}"><meta name="twitter:description" content="{E(desc)}"><meta name="twitter:image" content="{og_img}">
@@ -303,13 +302,13 @@ def filters():
     return f'<div class="flt" role="group" aria-label="{E(T("Фильтр по классу"))}">{b}<button type="button" class="srt" data-sort title="{E(T("Сортировка по цене"))}">{T("Цена ↑")}</button></div>'
 
 def terms_html():
-    t = "".join(f'<div class="term{" neg" if k == "taxi" else ""}"><span class="ic">{ic(k)}</span><h3>{E(T(h))}</h3><p>{E(T(p))}</p></div>' for k, h, p in TERMS)
-    t += f'<a class="term cta" href="{wa(T("Здравствуйте! Вопрос по условиям аренды."))}" target="_blank" rel="noopener"><span class="ic">{WA_IC}</span><h3>{T("Остались вопросы?")}</h3><p>{T("Напишите в WhatsApp — ответим по условиям, датам и доставке.")}</p></a>'
+    t = "".join(f'<div class="term{" neg" if k == "taxi" else ""}"><h3>{E(T(h))}</h3><p>{E(T(p))}</p></div>' for k, h, p in TERMS)
+    t += f'<a class="term cta" href="{wa(T("Здравствуйте! Вопрос по условиям аренды."))}" target="_blank" rel="noopener"><h3>{T("Остались вопросы?")}</h3><p>{T("Напишите в WhatsApp — ответим по условиям, датам и доставке.")}</p><span class="more">{T("Написать в WhatsApp")} →</span></a>'
     r = "".join(f"<li>{E(T(x))}</li>" for x in RULES)
     return f'<div class="terms">{t}</div><ul class="rules">{r}</ul>'
 
 def steps_html():
-    return '<div class="steps">' + "".join(f'<div class="step"><span class="ic">{ic(k)}</span><h3>{E(T(h))}</h3><p>{E(T(p))}</p></div>' for k, h, p in STEPS) + "</div>"
+    return '<div class="steps">' + "".join(f'<div class="step"><h3>{E(T(h))}</h3><p>{E(T(p))}</p></div>' for k, h, p in STEPS) + "</div>"
 def factors_html():
     return '<dl class="fac">' + "".join(f"<div><dt>{E(T(h))}</dt><dd>{E(T(p))}</dd></div>" for h, p in PRICE_FACTORS) + "</dl>"
 def faq_html(faq): return '<div class="faq">' + "".join(f"<details><summary>{E(q)}</summary><p>{E(a)}</p></details>" for q, a in faq) + "</div>"
@@ -322,7 +321,7 @@ def book(sel=None, area=""):
     dl = f"Доставка по адресу — {area}" if area else T("Доставка по адресу в Астане")
     return f"""<section class="s bk" id="bron"><div class="w book">
 <div class="bk-l"><h2>{title}</h2><p class="lead">{T("Выберите даты — посчитаем стоимость. Заявка уйдёт менеджеру в WhatsApp, он подтвердит, что машина свободна.")}</p>
-<ul><li>{ic("check")}<span>{T("Удостоверение личности и водительские права")}</span></li><li>{ic("check")}<span>{T("Возраст от 20 лет, стаж от 2 лет")}</span></li><li>{ic("check")}<span>{T("Депозит {dep} — вернём сразу после возврата авто").format(dep=rub(DEPOSIT))}</span></li><li>{ic("taxi")}<span>{T("Только личные поездки — не под такси и работу")}</span></li></ul></div>
+<ul><li><span>{T("Удостоверение личности и водительские права")}</span></li><li><span>{T("Возраст от 20 лет, стаж от 2 лет")}</span></li><li><span>{T("Депозит {dep} — вернём сразу после возврата авто").format(dep=rub(DEPOSIT))}</span></li><li><span>{T("Только личные поездки — не под такси и работу")}</span></li></ul></div>
 <form class="form" id="book" novalidate>
 <label class="full">{T("Машина")}<select name="car">{opts}</select></label>
 <label>{T("Дата начала")}<input type="date" name="d1"></label>
@@ -367,7 +366,7 @@ def hero():
     rules = [("taxi", T("Только для личных поездок"), T("Не под такси, доставку и перевозки")),
              ("age", T("С 20 лет и стажем от 2 лет"), T("Нужны удостоверение и права")),
              ("dep", T("Депозит {dep}").format(dep=rub(DEPOSIT)), T("Вернём сразу после возврата авто"))]
-    lis = "".join(f"<li>{ic(k)}<span><b>{h}</b>{p}</span></li>" for k, h, p in rules)
+    lis = "".join(f"<li><b>{h}</b><span>{p}</span></li>" for k, h, p in rules)
     html_ = f"""<section class="hero"><div class="hero-bg">{poster}{vid}</div>
 <div class="w hero-in"><h1>{T("Аренда авто без водителя в Астане")}</h1>
 <p class="lead">{T("{n} — от Hyundai Accent до Mercedes G63, от {p} в сутки. Машины выдаём только для личных поездок.").format(n=cars_n(len(CARS)), p=rub(MIN_PRICE))}</p>
@@ -596,7 +595,7 @@ def build_meta():
         return f"{r - (0.1 if b != p else 0):.1f}"
     sm = "".join(f"<url><loc>{SITE_URL}{p}</loc><lastmod>{ARTICLE_DATE}</lastmod><priority>{pri(p)}</priority></url>" for p in SITEMAP)
     (DIST / "sitemap.xml").write_text(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{sm}</urlset>\n', encoding="utf-8")
-    (DIST / "site.webmanifest").write_text(json.dumps({"name": f"{BRAND} — аренда авто в Астане", "short_name": BRAND, "start_url": "/", "display": "standalone", "background_color": "#060607", "theme_color": "#060607",
+    (DIST / "site.webmanifest").write_text(json.dumps({"name": f"{BRAND} — аренда авто в Астане", "short_name": BRAND, "start_url": "/", "display": "standalone", "background_color": "#ffffff", "theme_color": "#ffffff",
         "icons": [{"src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png"}, {"src": "/assets/favicon.svg", "sizes": "any", "type": "image/svg+xml"}]}, ensure_ascii=False), encoding="utf-8")
     fleet = "\n".join(f"- {c['full']} — {nb(c['price'])} ₸/сутки; {c['body'].lower()}, {cls_names(c).lower()}: {SITE_URL}/avto/{c['slug']}/" for c in sorted(CARS, key=lambda c: c["price"]))
     terms = "\n".join(f"- {h}: {p}" for _, h, p in TERMS) + "\n" + "\n".join(f"- {x}" for x in RULES)
