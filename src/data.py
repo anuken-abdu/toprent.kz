@@ -13,8 +13,8 @@ ADDRESS = "г. Астана, ул. Улы Дала, 47/1"
 STREET = "ул. Улы Дала, 47/1"
 HOURS = "10:00–23:00"; OPENS = "10:00"; CLOSES = "23:00"
 DEPOSIT = 20000
-TAG_ID = ""                                  # тег Google (GTM-… или G-…) — вставить, когда пришлёте
-GADS_ID = ""; GADS_LABEL = ""                # конверсия Google Ads: звонок / WhatsApp / заявка
+TAG_ID = "GTM-PSTLXCCQ"                                  # тег Google (GTM-… или G-…) — вставить, когда пришлёте
+GADS_ID = "AW-18579210530"; GADS_LABEL = "5n29CMaE2rkdEKKCoZtF"                # конверсия Google Ads: звонок / WhatsApp / заявка
 
 # ---------------------------------------------------------------- условия (от владельца)
 TERMS = [

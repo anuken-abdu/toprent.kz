@@ -11,7 +11,7 @@ from i18n import TR, CHAT_T
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
-VER = "1711264"
+VER = "1711265"
 E = html.escape
 CLS = {c["slug"]: c for c in CLASSES}
 nb = lambda n: f"{n:,}".replace(",", " ")
@@ -100,15 +100,16 @@ def conv_js():
     """Код события конверсии по инструкции Google + защита от блокировщиков (done + 800 мс)."""
     if not (GADS_ID and GADS_LABEL): return ""
     return ("<script>\n  function gtag_report_conversion(url) {\n    var done = false;\n    var callback = function () { if (done) return; done = true; if (typeof(url) != 'undefined') { window.location = url; } };\n"
-            f"    if (typeof gtag === 'function') {{ gtag('event', 'conversion', {{ 'send_to': '{GADS_ID}/{GADS_LABEL}', 'value': 1.0, 'currency': 'KZT', 'event_callback': callback }}); }}\n"
+            f"    if (typeof gtag === 'function') {{ gtag('event', 'conversion', {{ 'send_to': '{GADS_ID}/{GADS_LABEL}', 'event_callback': callback }}); }}\n"
             "    setTimeout(callback, 800);\n    return false;\n  }\n</script>\n")
 
 def gtag():
+    """Тег Google — ровно как в Google Ads → Конверсии → «Добавить тег Google» (один тег на страницу)."""
     if not TAG_ID: return ""
-    src = "gtm.js" if TAG_ID.startswith("GTM-") else "gtag/js"
-    return (f'<script async src="https://www.googletagmanager.com/{src}?id={TAG_ID}"></script>\n'
-            "<script>\n  window.dataLayer = window.dataLayer || [];\n  function gtag(){dataLayer.push(arguments);}\n  gtag('js', new Date());\n"
-            + ("" if TAG_ID.startswith("GTM-") else f"  gtag('config', '{TAG_ID}');\n") + "</script>\n")
+    return ("<!-- Google tag (gtag.js) -->\n"
+            f'<script async src="https://www.googletagmanager.com/gtag/js?id={TAG_ID}"></script>\n'
+            "<script>\n  window.dataLayer = window.dataLayer || [];\n  function gtag(){dataLayer.push(arguments);}\n  gtag('js', new Date());\n\n"
+            f"  gtag('config', '{TAG_ID}');\n</script>\n")
 
 def org():
     return {"@type": "AutoRental", "@id": SITE_URL + "/#org", "name": BRAND, "url": SITE_URL + "/", "telephone": PHONE_TEL,
