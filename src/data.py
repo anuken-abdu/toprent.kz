@@ -14,6 +14,9 @@ STREET = "ул. Улы Дала, 47/1"
 HOURS = "10:00–23:00"; OPENS = "10:00"; CLOSES = "23:00"
 DEPOSIT = 20000
 TAG_ID = "GTM-PSTLXCCQ"                                  # тег Google (GTM-… или G-…) — вставить, когда пришлёте
+TAG_GA = "G-1926Z1CS63"                      # тег Google Аналитики — вторая строка config в том же теге (скрипт грузится один раз)
+GSC_FILE = "googlec9e8b8c7d6bbc1df"          # подтверждение Google Search Console (HTML-файл в корне сайта — не удалять)
+GSC_META = "gEqXJU118VDjDwCVO7DvfSbKnAMr8dIYMOnguKcCnKQ"   # подтверждение Search Console метатегом (не удалять)
 GADS_ID = "AW-18579210530"; GADS_LABEL = "5n29CMaE2rkdEKKCoZtF"                # конверсия Google Ads: звонок / WhatsApp / заявка
 
 # ---------------------------------------------------------------- условия (от владельца)

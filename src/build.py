@@ -11,7 +11,7 @@ from i18n import TR, CHAT_T
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
-VER = "1711265"
+VER = "1711266"
 E = html.escape
 CLS = {c["slug"]: c for c in CLASSES}
 nb = lambda n: f"{n:,}".replace(",", " ")
@@ -109,7 +109,7 @@ def gtag():
     return ("<!-- Google tag (gtag.js) -->\n"
             f'<script async src="https://www.googletagmanager.com/gtag/js?id={TAG_ID}"></script>\n'
             "<script>\n  window.dataLayer = window.dataLayer || [];\n  function gtag(){dataLayer.push(arguments);}\n  gtag('js', new Date());\n\n"
-            f"  gtag('config', '{TAG_ID}');\n</script>\n")
+            f"  gtag('config', '{TAG_ID}');\n" + (f"  gtag('config', '{TAG_GA}');\n" if TAG_GA else "") + "</script>\n")
 
 def org():
     return {"@type": "AutoRental", "@id": SITE_URL + "/#org", "name": BRAND, "url": SITE_URL + "/", "telephone": PHONE_TEL,
@@ -218,7 +218,7 @@ def page(path, title, desc, body, cur="", ld=None, preload=None, og=None, noinde
 <meta charset="utf-8">
 {gtag()}{conv_js()}{THEME_JS}
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>{E(title)}</title>
+{f'<meta name="google-site-verification" content="{GSC_META}" />' + chr(10) if GSC_META else ""}<title>{E(title)}</title>
 <meta name="description" content="{E(desc)}">
 <link rel="canonical" href="{url}">
 {alts}{'<meta name="robots" content="noindex,follow">' if noindex else '<meta name="robots" content="index,follow,max-image-preview:large">'}
@@ -669,6 +669,7 @@ def main():
     shutil.copytree(ROOT / "assets", DIST / "assets")
     shutil.copyfile(ROOT / "src" / "app.js", DIST / "assets" / "app.js")
     if (ROOT / "assets" / "favicon.ico").exists(): shutil.copyfile(ROOT / "assets" / "favicon.ico", DIST / "favicon.ico")
+    if GSC_FILE: (DIST / f"{GSC_FILE}.html").write_text(f"google-site-verification: {GSC_FILE}.html", encoding="utf-8")   # Search Console
     got = 0
     for c in CARS:
         c["ph"] = photos(c); got += len(c["ph"])
