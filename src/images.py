@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Фото машин: orig/<slug>-1.jpg … -4.jpg → assets/img/cars/<slug>-N-{480,800,1200}.webp.
+Фон главной: orig/hero/pc-day.jpg, pc-night.jpg (горизонтальные), mob-day.jpg, mob-night.jpg (вертикальные) → assets/img/hero/*.webp.
 EXIF и GPS удаляются (сохраняем только пиксели). Запуск локально: python3 src/images.py
 Vercel ничего не пересжимает — берёт готовые файлы из assets/."""
 import sys
@@ -36,5 +37,24 @@ def main():
         done += 1
     print(f"фото обработано: {done}" + (f"; пропущены (имя не по коду машины): {', '.join(skipped)}" if skipped else ""))
 
+HERO_SIZES = {"pc": (1920, 1080), "mob": (900, 1600)}
+def hero():
+    src, out = ROOT / "orig" / "hero", ROOT / "assets" / "img" / "hero"
+    if not src.exists(): return
+    out.mkdir(parents=True, exist_ok=True)
+    for f in sorted(src.glob("*")):
+        if f.suffix.lower() not in EXT: continue
+        key = f.stem.lower()
+        d = key.split("-")[0]
+        if d not in HERO_SIZES or key not in ("pc-day", "pc-night", "mob-day", "mob-night"):
+            print("фон: пропущен (нужно pc-day, pc-night, mob-day, mob-night):", f.name); continue
+        tw, th = HERO_SIZES[d]
+        with Image.open(f) as im:
+            im = ImageOps.exif_transpose(im).convert("RGB")
+            im = ImageOps.fit(im, (tw, th), Image.LANCZOS, centering=(0.5, 0.5))   # кадр под экран, лишнее по краям обрезается
+            clean = Image.new("RGB", im.size); clean.paste(im)                    # без EXIF и геолокации
+            clean.save(out / f"{key}.webp", "WEBP", quality=78, method=6)
+        print(f"фон {key}.webp: {(out / f'{key}.webp').stat().st_size // 1024} КБ")
+
 if __name__ == "__main__":
-    main()
+    main(); hero()

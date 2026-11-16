@@ -39,22 +39,6 @@
   document.addEventListener("click", function (e) { langs.forEach(function (d) { if (d.open && !d.contains(e.target)) d.open = false; }); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") langs.forEach(function (d) { d.open = false; }); });
 
-  /* ---------- видео на главной: грузится после страницы, не на медленном интернете ---------- */
-  var hv = $(".hero-bg video");
-  if (hv) {
-    var nc = navigator.connection || {};
-    var calm = (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) || nc.saveData || /(^|-)2g$/.test(nc.effectiveType || "");
-    var startV = function () {
-      var mob = window.matchMedia && matchMedia("(max-width: 767px)").matches;
-      var src = (mob ? hv.dataset.mob : hv.dataset.pc) || hv.dataset.pc || hv.dataset.mob;
-      if (!src) return;
-      hv.src = src;
-      hv.addEventListener("playing", function () { hv.classList.add("on"); }, { once: true });
-      var pr = hv.play(); if (pr && pr.catch) pr.catch(function () {});
-    };
-    if (!calm) { if (document.readyState === "complete") setTimeout(startV, 300); else window.addEventListener("load", function () { setTimeout(startV, 300); }); }
-  }
-
   /* ---------- фильтр и сортировка автопарка ---------- */
   var grid = $("[data-grid]");
   if (grid) {

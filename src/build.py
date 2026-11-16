@@ -2,7 +2,7 @@
 """Генератор сайта аренды авто без водителя: src/ → dist/. Запуск: python3 src/build.py
 Языки: русский (основной, все страницы), английский /en/, казахский /kz/, китайский /zh/ — переводы в src/i18n.py.
 Фото машин: orig/<slug>-1.jpg … -4.jpg → python3 src/images.py → assets/img/cars/.
-Видео на главной: assets/video/hero-pc.mp4 и hero-mob.mp4 (+ hero-pc.jpg / hero-mob.jpg — первый кадр) — подхватываются автоматически."""
+Фон главной: orig/hero/pc-day.jpg, pc-night.jpg, mob-day.jpg, mob-night.jpg → python3 src/images.py — подхватываются автоматически."""
 import json, os, re, shutil, sys, html, urllib.request
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -11,7 +11,7 @@ from i18n import TR, CHAT_T
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
-VER = "1711262"
+VER = "1711263"
 E = html.escape
 CLS = {c["slug"]: c for c in CLASSES}
 nb = lambda n: f"{n:,}".replace(",", " ")
@@ -85,7 +85,6 @@ def srcset(p): return ", ".join(f"{p}-{s}.webp {s}w" for s in (480, 800, 1200))
 def img(p, alt, sizes, eager=False, w=1200, h=800):
     pr = 'fetchpriority="high"' if eager else 'loading="lazy"'
     return f'<img src="{p}-800.webp" srcset="{srcset(p)}" sizes="{sizes}" alt="{E(alt)}" width="{w}" height="{h}" {pr} decoding="async">'
-VID = ROOT / "assets" / "video"
 HERO_CAR = "mercedes-s-class-w222"    # запасной фон главной, пока нет видео (не Lexus)
 
 # ---------------------------------------------------------------- общие блоки
@@ -125,7 +124,7 @@ def faq_ld(faq):
     return {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in faq]}
 
 POLICY = "/politika/"
-LOGO = '<b>TOP</b>RENT'
+LOGO = '<img class="lg" src="/assets/logo-light.webp" width="416" height="80" alt="" decoding="async">'
 def nav_items():
     n = [(T("Автопарк"), "/avto/"), (T("Цены"), "/ceny/"), (T("Условия"), "/usloviya/")]
     if L == "ru": n.append(("Статьи", "/stati/"))
@@ -160,7 +159,7 @@ def header(cur, path):
 <button class="burger" type="button" aria-label="{E(T("Открыть меню"))}" aria-expanded="false" aria-controls="drawer">{ic("menu")}<span>{T("Меню")}</span></button></div>
 </div></header>
 <div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="{E(T("Меню"))}"><div class="d-p">
-<div class="x"><a class="logo" href="{U("/")}">{LOGO}</a><button type="button" data-close aria-label="{E(T("Закрыть меню"))}">{ic("x")}</button></div>
+<div class="x"><a class="logo" href="{U("/")}" aria-label="TOPRENT — {E(T("на главную"))}">{LOGO}</a><button type="button" data-close aria-label="{E(T("Закрыть меню"))}">{ic("x")}</button></div>
 <nav aria-label="{E(T("Меню"))}">{dnav}</nav>
 <div class="d-bt"><div class="d-ct"><a class="btn c" href="tel:{PHONE_TEL}">{ic("phone")}{T("Позвонить")}</a><a class="btn" href="{wa(hello())}" target="_blank" rel="noopener">{WA_IC}WhatsApp</a></div>
 <p class="dh">{PHONE_DISPLAY} · {T("ежедневно")} {HOURS}</p></div>
@@ -228,7 +227,7 @@ def page(path, title, desc, body, cur="", ld=None, preload=None, og=None, noinde
 <meta property="og:title" content="{E(title)}"><meta property="og:description" content="{E(desc)}"><meta property="og:url" content="{url}"><meta property="og:image" content="{og_img}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{E(title)}"><meta name="twitter:description" content="{E(desc)}"><meta name="twitter:image" content="{og_img}">
 <meta name="geo.region" content="KZ-AST"><meta name="geo.placename" content="{CITY_EN if L != "ru" else CITY}">
-<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48"><link rel="icon" href="/assets/favicon-32.png" type="image/png" sizes="32x32"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <link rel="preload" href="/assets/fonts/onest-{"latin" if L in ("en", "zh") else "cyrillic"}-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 {pre}{head_extra}<style>{CSS}</style>
 <script type="application/ld+json">{json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False)}</script>
@@ -348,26 +347,32 @@ def call_act(msg):
     return f'<div class="act"><a class="btn c" href="{wa(msg)}" target="_blank" rel="noopener">{WA_IC}{T("Написать в WhatsApp")}</a><a class="btn" href="tel:{PHONE_TEL}">{ic("phone")}{T("Позвонить")}</a></div>'
 
 # ---------------------------------------------------------------- страницы
+HERO = ROOT / "assets" / "img" / "hero"
 def hero():
-    pc, mob = VID / "hero-pc.mp4", VID / "hero-mob.mp4"
-    has_v = pc.exists() or mob.exists()
-    pp = (VID / "hero-pc.jpg").exists(); pm = (VID / "hero-mob.jpg").exists()
-    if pp or pm:   # кадр из видео — фон до запуска видео
-        a, b = ("/assets/video/hero-mob.jpg" if pm else "/assets/video/hero-pc.jpg"), ("/assets/video/hero-pc.jpg" if pp else "/assets/video/hero-mob.jpg")
-        poster = f'<picture><source media="(min-width: 768px)" srcset="{b}"><img src="{a}" alt="" width="1080" height="1920" fetchpriority="high" decoding="async"></picture>'
-        pre = f'<link rel="preload" as="image" href="{a}" media="(max-width: 767px)" fetchpriority="high"><link rel="preload" as="image" href="{b}" media="(min-width: 768px)" fetchpriority="high">\n'
+    """Фон главной: assets/img/hero/{pc,mob}-{day,night}.webp (готовит src/images.py из orig/hero/).
+    Фото подставляет CSS по теме и ширине экрана — грузится только одно нужное. Нет фото — запасное фото машины."""
+    have = {f"{d}-{t}": (HERO / f"{d}-{t}.webp").exists() for d in ("pc", "mob") for t in ("day", "night")}
+    if any(have.values()):
+        def pick(d, t):
+            for k in (f"{d}-{t}", f"{d}-{'night' if t == 'day' else 'day'}", f"{'mob' if d == 'pc' else 'pc'}-{t}"):
+                if have.get(k): return f"/assets/img/hero/{k}.webp"
+            return next(f"/assets/img/hero/{k}.webp" for k, v in have.items() if v)
+        css = (f".hero-bg{{background:#e9ebee url({pick('mob', 'day')}) center/cover no-repeat}}"
+               f":root[data-theme=dark] .hero-bg{{background:#08090b url({pick('mob', 'night')}) center/cover no-repeat}}"
+               f"@media (min-width:768px){{.hero-bg{{background-image:url({pick('pc', 'day')})}}:root[data-theme=dark] .hero-bg{{background-image:url({pick('pc', 'night')})}}}}")
+        js = ("<script>(function(){var n=document.documentElement.dataset.theme==='dark',m=window.matchMedia&&matchMedia('(max-width: 767px)').matches,"
+              f"u=n?(m?'{pick('mob', 'night')}':'{pick('pc', 'night')}'):(m?'{pick('mob', 'day')}':'{pick('pc', 'day')}'),"
+              "l=document.createElement('link');l.rel='preload';l.as='image';l.href=u;l.setAttribute('fetchpriority','high');document.head.appendChild(l)})()</script>\n")
+        bg, pre = "", f"<style>{css}</style>\n{js}"
     else:
         p = f"/assets/img/cars/{HERO_CAR}-1"
-        poster = f'<img src="{p}-800.webp" srcset="{srcset(p)}" sizes="100vw" alt="" width="1200" height="800" fetchpriority="high" decoding="async">'
+        bg = f'<img src="{p}-800.webp" srcset="{srcset(p)}" sizes="100vw" alt="" width="1200" height="800" fetchpriority="high" decoding="async">'
         pre = f'<link rel="preload" as="image" href="{p}-800.webp" imagesrcset="{srcset(p)}" imagesizes="100vw" fetchpriority="high">\n'
-    vid = ""
-    if has_v:
-        vid = f'<video muted loop playsinline preload="none" aria-hidden="true" data-pc="{"/assets/video/hero-pc.mp4" if pc.exists() else ""}" data-mob="{"/assets/video/hero-mob.mp4" if mob.exists() else ""}"></video>'
     rules = [("taxi", T("Только для личных поездок"), T("Не под такси, доставку и перевозки")),
              ("age", T("С 20 лет и стажем от 2 лет"), T("Нужны удостоверение и права")),
              ("dep", T("Депозит {dep}").format(dep=rub(DEPOSIT)), T("Вернём сразу после возврата авто"))]
     lis = "".join(f"<li><b>{h}</b><span>{p}</span></li>" for k, h, p in rules)
-    html_ = f"""<section class="hero"><div class="hero-bg">{poster}{vid}</div>
+    html_ = f"""<section class="hero"><div class="hero-bg" role="img" aria-label="{E(T("Аренда авто без водителя в Астане"))}">{bg}</div>
 <div class="w hero-in"><h1>{T("Аренда авто без водителя в Астане")}</h1>
 <p class="lead">{T("{n} — от Hyundai Accent до Mercedes G63, от {p} в сутки. Машины выдаём только для личных поездок.").format(n=cars_n(len(CARS)), p=rub(MIN_PRICE))}</p>
 <ul class="hero-r">{lis}</ul>
@@ -596,7 +601,7 @@ def build_meta():
     sm = "".join(f"<url><loc>{SITE_URL}{p}</loc><lastmod>{ARTICLE_DATE}</lastmod><priority>{pri(p)}</priority></url>" for p in SITEMAP)
     (DIST / "sitemap.xml").write_text(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{sm}</urlset>\n', encoding="utf-8")
     (DIST / "site.webmanifest").write_text(json.dumps({"name": f"{BRAND} — аренда авто в Астане", "short_name": BRAND, "start_url": "/", "display": "standalone", "background_color": "#ffffff", "theme_color": "#ffffff",
-        "icons": [{"src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png"}, {"src": "/assets/favicon.svg", "sizes": "any", "type": "image/svg+xml"}]}, ensure_ascii=False), encoding="utf-8")
+        "icons": [{"src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png"}]}, ensure_ascii=False), encoding="utf-8")
     fleet = "\n".join(f"- {c['full']} — {nb(c['price'])} ₸/сутки; {c['body'].lower()}, {cls_names(c).lower()}: {SITE_URL}/avto/{c['slug']}/" for c in sorted(CARS, key=lambda c: c["price"]))
     terms = "\n".join(f"- {h}: {p}" for _, h, p in TERMS) + "\n" + "\n".join(f"- {x}" for x in RULES)
     fac = "\n".join(f"- {h}: {p}" for h, p in PRICE_FACTORS)
