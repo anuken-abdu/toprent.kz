@@ -3,21 +3,54 @@
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var CFG = window.__C || {};
+  var TT = CFG.t || {};
+  var tt = function (k, d) { return TT[k] || d; };
   var fmt = function (n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " "); };
 
   /* ---------- конверсии: одна функция Google (gtag_report_conversion) ----------
      Ссылки tel: и wa.me получают onclick при сборке; здесь — только форма и ссылки, созданные скриптом (чат). */
   function conv() { if (typeof window.gtag_report_conversion === "function") window.gtag_report_conversion(); }
 
-  /* ---------- мобильное меню ---------- */
+  /* ---------- меню-панель ---------- */
   var drawer = $("#drawer"), burger = $(".burger");
   if (drawer && burger) {
-    var close = function () { drawer.classList.remove("on"); burger.setAttribute("aria-expanded", "false"); document.body.style.overflow = ""; burger.focus(); };
-    burger.addEventListener("click", function () { drawer.classList.add("on"); burger.setAttribute("aria-expanded", "true"); document.body.style.overflow = "hidden"; var b = $("button", drawer); if (b) b.focus(); });
-    $("[data-close]", drawer).addEventListener("click", close);
-    $$("a", drawer).forEach(function (a) { a.addEventListener("click", function () { drawer.classList.remove("on"); burger.setAttribute("aria-expanded", "false"); document.body.style.overflow = ""; }); });
-    drawer.addEventListener("click", function (e) { if (e.target === drawer) close(); });
-    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && drawer.classList.contains("on")) close(); });
+    var shut = function (focus) { drawer.classList.remove("on"); burger.setAttribute("aria-expanded", "false"); document.body.style.overflow = ""; if (focus) burger.focus(); };
+    burger.addEventListener("click", function () { drawer.classList.add("on"); burger.setAttribute("aria-expanded", "true"); document.body.style.overflow = "hidden"; var b = $("[data-close]", drawer); if (b) b.focus(); });
+    $("[data-close]", drawer).addEventListener("click", function () { shut(true); });
+    $$("a", drawer).forEach(function (a) { a.addEventListener("click", function () { shut(false); }); });
+    drawer.addEventListener("click", function (e) { if (e.target === drawer) shut(true); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && drawer.classList.contains("on")) shut(true); });
+  }
+
+  /* ---------- дневной / ночной режим (выбор запоминается) ---------- */
+  var root = document.documentElement;
+  $$("[data-theme-t]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var t = root.dataset.theme === "light" ? "dark" : "light";
+      root.dataset.theme = t;
+      try { localStorage.setItem("theme", t); } catch (e) {}
+    });
+  });
+
+  /* ---------- язык: закрыть список по клику вне и по Esc ---------- */
+  var langs = $$("details.lang");
+  document.addEventListener("click", function (e) { langs.forEach(function (d) { if (d.open && !d.contains(e.target)) d.open = false; }); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") langs.forEach(function (d) { d.open = false; }); });
+
+  /* ---------- видео на главной: грузится после страницы, не на медленном интернете ---------- */
+  var hv = $(".hero-bg video");
+  if (hv) {
+    var nc = navigator.connection || {};
+    var calm = (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) || nc.saveData || /(^|-)2g$/.test(nc.effectiveType || "");
+    var startV = function () {
+      var mob = window.matchMedia && matchMedia("(max-width: 767px)").matches;
+      var src = (mob ? hv.dataset.mob : hv.dataset.pc) || hv.dataset.pc || hv.dataset.mob;
+      if (!src) return;
+      hv.src = src;
+      hv.addEventListener("playing", function () { hv.classList.add("on"); }, { once: true });
+      var pr = hv.play(); if (pr && pr.catch) pr.catch(function () {});
+    };
+    if (!calm) { if (document.readyState === "complete") setTimeout(startV, 300); else window.addEventListener("load", function () { setTimeout(startV, 300); }); }
   }
 
   /* ---------- фильтр и сортировка автопарка ---------- */
@@ -37,7 +70,7 @@
       cards.sort(function (a, b) { return asc ? b.dataset.p - a.dataset.p : a.dataset.p - b.dataset.p; });
       asc = !asc;
       cards.forEach(function (c) { grid.appendChild(c); });
-      srt.textContent = asc ? "Цена ↑" : "Цена ↓";
+      srt.textContent = asc ? tt("up", "Цена ↑") : tt("down", "Цена ↓");
     });
   }
 
@@ -66,23 +99,23 @@
     var calc = function () {
       var o = el.car.options[el.car.selectedIndex], p = +(o && o.dataset.p || 0), n = days();
       if (el.d1.value) el.d2.min = el.d1.value;
-      if (!p) { out.innerHTML = "<span>Выберите машину</span><span>Депозит: <b>" + fmt(CFG.dep) + " ₸</b></span>"; return; }
+      if (!p) { out.innerHTML = "<span>" + tt("pick", "Выберите машину") + "</span><span>" + tt("dep", "Депозит") + ": <b>" + fmt(CFG.dep) + " ₸</b></span>"; return; }
       out.innerHTML = n
-        ? "<span>" + n + " сут. × " + fmt(p) + " ₸ = <b>" + fmt(n * p) + " ₸</b></span><span>+ депозит <b>" + fmt(CFG.dep) + " ₸</b> (вернём)</span>"
-        : "<span>" + fmt(p) + " ₸ / сутки</span><span>+ депозит <b>" + fmt(CFG.dep) + " ₸</b> (вернём)</span>";
+        ? "<span>" + n + " " + tt("days", "сут.") + " × " + fmt(p) + " ₸ = <b>" + fmt(n * p) + " ₸</b></span><span>" + tt("plus", "+ депозит") + " <b>" + fmt(CFG.dep) + " ₸</b> (" + tt("back", "вернём") + ")</span>"
+        : "<span>" + fmt(p) + " ₸ / " + tt("day", "сутки") + "</span><span>" + tt("plus", "+ депозит") + " <b>" + fmt(CFG.dep) + " ₸</b> (" + tt("back", "вернём") + ")</span>";
     };
     ["change", "input"].forEach(function (ev) { form.addEventListener(ev, calc); });
     calc();
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var ph = el.phone.value.replace(/\D/g, "");
-      if (ph.length < 10) { el.phone.setCustomValidity("Укажите номер телефона"); el.phone.reportValidity(); return; }
+      if (ph.length < 10) { el.phone.setCustomValidity(tt("phone", "Укажите номер телефона")); el.phone.reportValidity(); return; }
       el.phone.setCustomValidity("");
       var o = el.car.options[el.car.selectedIndex], n = days(), g = el.get ? el.get.value : "";
       var d = function (v) { return v ? v.split("-").reverse().join(".") : "—"; };
-      var t = "Здравствуйте! Хочу арендовать авто.\nМашина: " + (o && o.value ? o.dataset.n : "подберите") +
-        "\nДаты: " + d(el.d1.value) + " — " + d(el.d2.value) + (n ? " (" + n + " сут.)" : "") + (g ? "\nПолучение: " + g : "") +
-        "\nИмя: " + (el.name.value || "—") + "\nТелефон: " + el.phone.value;
+      var t = tt("msg", "Здравствуйте! Хочу арендовать авто.") + "\n" + tt("car", "Машина") + ": " + (o && o.value ? o.dataset.n : tt("any", "подберите")) +
+        "\n" + tt("dates", "Даты") + ": " + d(el.d1.value) + " — " + d(el.d2.value) + (n ? " (" + n + " " + tt("days", "сут.") + ")" : "") + (g ? "\n" + tt("get", "Получение") + ": " + g : "") +
+        "\n" + tt("name", "Имя") + ": " + (el.name.value || "—") + "\n" + tt("tel", "Телефон") + ": " + el.phone.value;
       conv();
       window.open("https://wa.me/" + CFG.wa + "?text=" + encodeURIComponent(t), "_blank", "noopener");
     });
@@ -115,34 +148,36 @@
   }
 
   /* ---------- ИИ-чат: окно строится при первом открытии; /api/chat, без ключа — встроенный автоответчик.
-     Машины (фото, цена) — /assets/cars.json, грузится при открытии чата. ИИ помечает машины кодами [[slug]] ---------- */
-  var chat, list, flo = $(".flo"), hist = [], CARS = [];
+     Машины и фразы на языке страницы — /assets/chat-<язык>.json, грузится при открытии чата. ИИ помечает машины кодами [[slug]] ---------- */
+  var chat, list, flo = $(".flo"), hist = [], CARS = [], CT = {}, loaded = null;
   var WA_BASE = "https://wa.me/" + CFG.wa + "?text=";
-  var CLS = { ekonom: "Эконом", biznes: "Бизнес", vnedorozhniki: "Внедорожники и кроссоверы", premium: "Премиум" };
+  var fill = function (s, o) { return String(s || "").replace(/\{(\w+)\}/g, function (m, k) { return o[k] != null ? o[k] : m; }); };
+  var ct = function (k, o) { return fill(CT[k] || "", o || {}); };
   var FB = [
-    [/депоз|залог/i, "Депозит — " + fmt(CFG.dep) + " ₸. Возвращаем сразу после того, как вы вернёте машину."],
-    [/возраст|лет|стаж/i, "Арендовать можно с 20 лет при водительском стаже от 2 лет."],
-    [/документ|паспорт|удостовер|прав/i, "Нужны удостоверение личности и водительские права."],
-    [/такси|яндекс|доставк.*(еды|заказ)|курьер/i, "Под режим такси и другую работу машины не выдаём."],
-    [/привез|доставк|адрес.*машин|район/i, "Доставка по Астане — за доплату, сумма зависит от адреса. Забрать машину в офисе (" + CFG.addr + ") — без доплаты."],
-    [/город|трасс|выезд|поездк|межгород/i, "Машины выдаём для поездок по Астане. Выезд за город — по согласованию и с доплатой, сумма зависит от направления."],
-    [/график|время|работаете|час/i, "Работаем ежедневно с 10:00 до 23:00."],
-    [/цен|стоим|сколько|прайс|тенге|₸/i, "От 15 000 ₸ в сутки (Hyundai Accent) до 100 000 ₸ (Lexus LX570 2019, Mercedes W222). Выберите класс кнопкой ниже — покажу машины с фото и ценой."],
-    [/адрес|где|наход/i, "Мы в Астане: " + CFG.addr + ". Перед приездом позвоните: " + CFG.phone + "."]
+    [/депоз|залог|deposit|押金/i, "f_dep"], [/возраст|лет|стаж|жас|өтіл|\bage\b|years|年龄|驾龄/i, "f_age"], [/документ|паспорт|удостовер|прав|құжат|куәлік|document|license|licence|passport|\bid\b|证件|驾照|护照/i, "f_doc"],
+    [/такси|яндекс|курьер|taxi|uber|courier|出租|网约/i, "f_taxi"], [/привез|доставк|район|жеткіз|deliver|送车|送到/i, "f_del"],
+    [/город|трасс|выезд|межгород|қала|out of town|outside|intercity|出城|外地/i, "f_city"], [/график|время|работаете|час|кесте|уақыт|hours|open|time|营业|时间/i, "f_time"],
+    [/цен|стоим|сколько|прайс|тенге|₸|баға|қанша|price|cost|how much|价格|多少钱|费用/i, "f_price"], [/адрес|где|наход|мекенжай|қайда|address|where|location|地址|在哪/i, "f_addr"]
   ];
-  var CLS_RE = [[/эконом|дешев|бюджет|недорог/i, "ekonom"], [/бизнес/i, "biznes"], [/внедорож|джип|кроссовер|suv/i, "vnedorozhniki"], [/премиум|люкс|vip|вип|свадьб|статус/i, "premium"]];
+  var CLS_RE = [[/эконом|дешев|бюджет|недорог|арзан|economy|cheap|budget|经济|便宜/i, "ekonom"], [/бизнес|business|商务/i, "biznes"], [/внедорож|джип|кроссовер|suv|jeep|crossover|жол талғам|越野|SUV/i, "vnedorozhniki"], [/премиум|люкс|vip|вип|свадьб|статус|той|premium|luxury|wedding|豪华|婚礼/i, "premium"]];
   var bySlug = function (s) { for (var i = 0; i < CARS.length; i++) if (CARS[i].s === s) return CARS[i]; return null; };
   var loadCars = function () {
-    if (CARS.length) return Promise.resolve(CARS);
-    return fetch("/assets/cars.json").then(function (r) { return r.json(); }).then(function (d) { CARS = d || []; return CARS; }).catch(function () { return CARS; });
+    if (!loaded) loaded = fetch("/assets/chat-" + (CFG.lang || "ru") + ".json").then(function (r) { return r.json(); })
+      .then(function (d) { CARS = d.cars || []; CT = d.t || {}; return CARS; }).catch(function () { loaded = null; return CARS; });
+    return loaded;
+  };
+  var plural = function (n) {
+    if (CFG.lang !== "ru") return n + " " + ct("n5");
+    var m = n % 100, k = n % 10;
+    return n + " " + (m > 10 && m < 20 ? ct("n5") : k === 1 ? ct("n1") : k >= 2 && k <= 4 ? ct("n2") : ct("n5"));
   };
   var scroll = function () { list.scrollTop = list.scrollHeight; };
   var add = function (t, who) { var d = document.createElement("div"); d.className = "msg " + (who || ""); d.textContent = t; list.appendChild(d); scroll(); return d; };
   var lastQ = function () { for (var i = hist.length - 1; i >= 0; i--) if (hist[i].role === "user") return hist[i].content; return ""; };
   var actions = function () {
     var q = lastQ(), box = document.createElement("div"); box.className = "msg-a";
-    var tel = document.createElement("a"); tel.href = "tel:" + CFG.tel; tel.textContent = "Позвонить";
-    var w = document.createElement("a"); w.href = WA_BASE + encodeURIComponent("Здравствуйте! Хочу арендовать авто." + (q ? "\nВопрос из чата: " + q : "")); w.target = "_blank"; w.rel = "noopener"; w.textContent = "В WhatsApp";
+    var tel = document.createElement("a"); tel.href = "tel:" + CFG.tel; tel.textContent = ct("call");
+    var w = document.createElement("a"); w.href = WA_BASE + encodeURIComponent(ct("hello") + (q ? "\n" + ct("q") + ": " + q : "")); w.target = "_blank"; w.rel = "noopener"; w.textContent = ct("wa");
     [tel, w].forEach(function (a) { a.addEventListener("click", function () { conv(); }); box.appendChild(a); });
     list.appendChild(box); scroll();
   };
@@ -151,16 +186,16 @@
     var box = document.createElement("div"); box.className = "msg-c" + (cars.length > 1 ? " many" : "");
     cars.forEach(function (c) {
       var el = document.createElement("div"); el.className = "cc";
-      var pic = document.createElement("a"); pic.className = "cc-i"; pic.href = c.u; pic.setAttribute("aria-label", c.n + " — подробнее");
+      var pic = document.createElement("a"); pic.className = "cc-i"; pic.href = c.u; pic.setAttribute("aria-label", c.n + " — " + ct("more"));
       if (c.i) { var im = document.createElement("img"); im.src = c.i + "-480.webp"; im.width = 480; im.height = 320; im.alt = c.n; im.decoding = "async"; im.addEventListener("load", scroll); pic.appendChild(im); }
       else { var ph = document.createElement("span"); ph.textContent = c.n.split(" ")[0]; pic.appendChild(ph); }
       var b = document.createElement("div"); b.className = "cc-b";
       var nm = document.createElement("b"); nm.textContent = c.n;
-      var pr = document.createElement("span"); pr.textContent = fmt(c.p) + " ₸ / сутки";
+      var pr = document.createElement("span"); pr.textContent = fmt(c.p) + " " + ct("perday");
       var ac = document.createElement("div"); ac.className = "cc-a";
-      var w = document.createElement("a"); w.href = WA_BASE + encodeURIComponent("Здравствуйте! Хочу арендовать " + c.n + " (" + fmt(c.p) + " ₸ в сутки). Подскажите, свободна ли машина на мои даты?");
-      w.target = "_blank"; w.rel = "noopener"; w.textContent = "Забронировать"; w.addEventListener("click", function () { conv(); });
-      var more = document.createElement("a"); more.href = c.u; more.textContent = "Подробнее";
+      var w = document.createElement("a"); w.href = WA_BASE + encodeURIComponent(ct("bookmsg", { car: c.n, p: fmt(c.p) }));
+      w.target = "_blank"; w.rel = "noopener"; w.textContent = ct("book"); w.addEventListener("click", function () { conv(); });
+      var more = document.createElement("a"); more.href = c.u; more.textContent = ct("more");
       ac.appendChild(w); ac.appendChild(more); b.appendChild(nm); b.appendChild(pr); b.appendChild(ac);
       el.appendChild(pic); el.appendChild(b); box.appendChild(el);
     });
@@ -182,18 +217,16 @@
     return hit;
   };
   var ofClass = function (k) { return CARS.filter(function (c) { return c.c.indexOf(k) > -1; }); };
-  var local = function (q) {
-    var hit = findCars(q);
-    if (hit.length) return { t: hit.length === 1
-      ? hit[0].n + " — " + fmt(hit[0].p) + " ₸ в сутки, плюс депозит " + fmt(CFG.dep) + " ₸ (вернём). Нажмите «Забронировать» — менеджер проверит, свободна ли машина на ваши даты."
-      : "Вот что есть — цена за сутки на карточках. Плюс депозит " + fmt(CFG.dep) + " ₸ (вернём). Нажмите «Забронировать» у нужной машины.", c: hit.slice(0, 4) };
-    for (var i = 0; i < CLS_RE.length; i++) if (CLS_RE[i][0].test(q)) return classAns(CLS_RE[i][1]);
-    for (var j = 0; j < FB.length; j++) if (FB[j][0].test(q)) return { t: FB[j][1], c: [] };
-    return { t: "Подскажу по машинам, ценам и условиям. Выберите класс кнопкой ниже или напишите модель — покажу фото и цену. Забронировать: WhatsApp или " + CFG.phone + ".", c: [] };
-  };
   var classAns = function (k) {
     var cs = ofClass(k);
-    return { t: CLS[k] + ": " + cs.length + " " + (cs.length === 1 ? "машина" : cs.length < 5 ? "машины" : "машин") + ", от " + fmt(cs[0] ? cs[0].p : 0) + " ₸ в сутки. Листайте карточки и нажмите «Забронировать» у нужной.", c: cs };
+    return { t: ct("class", { k: (CT.cls || {})[k] || k, n: plural(cs.length), p: fmt(cs[0] ? cs[0].p : 0) }), c: cs };
+  };
+  var local = function (q) {
+    var hit = findCars(q), o = { dep: fmt(CFG.dep), addr: CFG.addr, phone: CFG.phone };
+    if (hit.length) return { t: hit.length === 1 ? ct("one", { car: hit[0].n, p: fmt(hit[0].p), dep: fmt(CFG.dep) }) : ct("many", o), c: hit.slice(0, 4) };
+    for (var i = 0; i < CLS_RE.length; i++) if (CLS_RE[i][0].test(q)) return classAns(CLS_RE[i][1]);
+    for (var j = 0; j < FB.length; j++) if (FB[j][0].test(q)) return { t: ct(FB[j][1], o), c: [] };
+    return { t: ct("def", o), c: [] };
   };
   var reply = function (t, cs) {
     add(t); hist.push({ role: "assistant", content: t });
@@ -202,24 +235,24 @@
   var ask = function (q) {
     q = (q || "").trim(); if (!q) return;
     add(q, "u"); hist.push({ role: "user", content: q });
-    var w = add("печатает…", "t");
+    var w = add(ct("typing") || "…", "t");
     var ctrl = window.AbortController ? new AbortController() : null;
     var to = setTimeout(function () { if (ctrl) ctrl.abort(); }, 15000);
     var fallback = function () { clearTimeout(to); loadCars().then(function () { w.remove(); var a = local(q); reply(a.t, a.c); }); };
-    Promise.all([loadCars(), fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: hist.slice(-12), page: location.pathname }), signal: ctrl ? ctrl.signal : undefined })
+    Promise.all([loadCars(), fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: hist.slice(-12), page: location.pathname, lang: CFG.lang }), signal: ctrl ? ctrl.signal : undefined })
       .then(function (r) { if (!r.ok) throw 0; return r.json(); })])
       .then(function (res) {
         var d = res[1]; if (!d || !d.text) throw 0;
         clearTimeout(to); w.remove();
         var cs = pick(d.text), t = strip(d.text);
         if (!cs.length) cs = findCars(q).slice(0, 4);
-        reply(t || "Вот подходящая машина.", cs);
+        reply(t || ct("fit"), cs);
       })
       .catch(fallback);
   };
   var askClass = function (b) {
-    var k = b.dataset.cls; add(b.textContent, "u"); hist.push({ role: "user", content: "Покажи машины класса " + b.textContent });
-    loadCars().then(function () { var a = classAns(k); reply(a.t, a.c); });
+    var k = b.dataset.cls; add(b.textContent, "u");
+    loadCars().then(function () { hist.push({ role: "user", content: ct("showcls", { k: b.textContent }) }); var a = classAns(k); reply(a.t, a.c); });
   };
   var closeChat = function () { chat.hidden = true; if (flo) flo.hidden = false; };
   var buildChat = function () {
@@ -231,8 +264,7 @@
     $$(".chat-q button", chat).forEach(function (b) { b.addEventListener("click", function () { if (b.dataset.cls) askClass(b); else ask(b.textContent); }); });
     $(".chat-w", chat).addEventListener("click", function () { conv(); });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !chat.hidden) closeChat(); });
-    add("Здравствуйте! Я ИИ-консультант " + CFG.brand + ". Выберите класс или напишите, какая машина нужна, — покажу фото и цену за сутки.");
-    loadCars();
+    loadCars().then(function () { add(ct("hi")); });
     return true;
   };
   var openChat = function () {

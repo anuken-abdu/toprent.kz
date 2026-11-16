@@ -34,7 +34,7 @@ module.exports = async (req, res) => {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model: MODEL, max_tokens: 500, system: SYSTEM + "\nСтраница: " + String((body && body.page) || "/").slice(0, 120), messages: clean }),
+      body: JSON.stringify({ model: MODEL, max_tokens: 500, system: SYSTEM + "\nСтраница: " + String((body && body.page) || "/").slice(0, 120) + "\nЯзык страницы: " + (["ru", "en", "kk", "zh"].indexOf(body && body.lang) > -1 ? body.lang : "ru"), messages: clean }),
     });
     if (!r.ok) { res.status(502).json({ error: "upstream" }); return; }
     const d = await r.json();
