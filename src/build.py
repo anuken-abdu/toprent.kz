@@ -11,7 +11,7 @@ from i18n import TR, CHAT_T
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
-VER = "1911261"
+VER = "1911262"
 E = html.escape
 CLS = {c["slug"]: c for c in CLASSES}
 nb = lambda n: f"{n:,}".replace(",", " ")
@@ -69,6 +69,7 @@ _P = {
  "sun": '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
  "moon": '<path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5z"/>',
  "arr": '<path d="M5 12h14M13 6l6 6-6 6"/>',
+ "zoom": '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',
 }
 ROBOT = ('<svg viewBox="0 0 64 64" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M26 12h12a14 14 0 0 1 14 14v10a14 14 0 0 1-14 14H25l-12.5 8.5L15 47A14 14 0 0 1 12 36V26a14 14 0 0 1 14-14zm-1.5 9.5A6.5 6.5 0 0 0 18 28v5.5a6.5 6.5 0 0 0 6.5 6.5h15a6.5 6.5 0 0 0 6.5-6.5V28a6.5 6.5 0 0 0-6.5-6.5z"/>'
          '<rect x="4.5" y="23" width="5" height="15" rx="2.5" fill="currentColor"/><rect x="54.5" y="23" width="5" height="15" rx="2.5" fill="currentColor"/>'
@@ -348,6 +349,19 @@ def call_act(msg):
     return f'<div class="act"><a class="btn c" href="{wa(msg)}" target="_blank" rel="noopener">{WA_IC}{T("Написать в WhatsApp")}</a><a class="btn" href="tel:{PHONE_TEL}">{ic("phone")}{T("Позвонить")}</a></div>'
 
 # ---------------------------------------------------------------- страницы
+H1_PARTS = {   # (город до, строки заголовка, город после, размер под ширину телефона); вместе = полный заголовок
+    "ru": ("", ("Аренда авто", "без водителя"), " в Астане", .132),
+    "en": ("", ("Self-drive", "car rental"), " in Astana", .164),
+    "kk": ("Астанада ", ("жүргізушісіз", "көлік жалға алу"), "", .109),
+    "zh": ("阿斯塔纳", ("自驾租车",), "", .25),
+}
+def hero_h1():
+    """На телефоне с видео видны только строки без города — крупно, на всю ширину; на ПК заголовок целиком."""
+    a, lines, z, k = H1_PARTS[L]
+    assert a + " ".join(lines) + z == T("Аренда авто без водителя в Астане"), f"заголовок {L}"
+    c = lambda t: f'<span class="h1-c">{E(t)}</span>' if t else ""
+    return f'<h1 style="--k:{k}">{c(a)}' + " ".join(f'<span class="h1-l">{E(t)}</span>' for t in lines) + f"{c(z)}</h1>"
+
 HERO = ROOT / "assets" / "img" / "hero"
 def hero():
     """Фон главной: assets/img/hero/{pc,mob}-{day,night}.webp (готовит src/images.py из orig/hero/).
@@ -380,10 +394,10 @@ def hero():
              ("dep", T("Депозит {dep}").format(dep=rub(DEPOSIT)), T("Вернём сразу после возврата авто"))]
     lis = "".join(f"<li><b>{h}</b><span>{p}</span></li>" for k, h, p in rules)
     html_ = f"""<section class="hero{ph}"><div class="hero-bg" role="img" aria-label="{E(T("Аренда авто без водителя в Астане"))}">{bg}</div>
-<div class="w hero-in"><h1>{T("Аренда авто без водителя в Астане")}</h1>
-<p class="lead">{T("{n} — от Hyundai Accent до Mercedes G63, от {p} в сутки. Машины выдаём только для личных поездок.").format(n=cars_n(FLEET_N), p=rub(MIN_PRICE))}</p>
+<div class="w hero-in"><div class="hero-t">{hero_h1()}</div>
+<div class="hero-b"><p class="lead">{T("{n} — от Hyundai Accent до Mercedes G63, от {p} в сутки. Машины выдаём только для личных поездок.").format(n=cars_n(FLEET_N), p=rub(MIN_PRICE))}</p>
 <ul class="hero-r">{lis}</ul>
-{call_act(hello())}</div></section>"""
+{call_act(hello())}</div></div></section>"""
     return html_, pre
 
 def build_home():
@@ -400,6 +414,15 @@ def build_home():
     page("/", T("Аренда авто без водителя в Астане от {p} ₸ | {b}").format(p=nb(MIN_PRICE), b=BRAND),
          T("Аренда авто без водителя в Астане: {n} от Hyundai Accent до Mercedes G63, от {p} ₸ в сутки. С 20 лет, депозит 20 000 ₸. Не под такси.").format(n=cars_n(FLEET_N), p=nb(MIN_PRICE)),
          body, "/", [faq_ld(tfaq(FAQ)), items], head_extra=pre)
+
+def lightbox():
+    """Просмотр фото на весь экран: листание кнопками, свайпом и стрелками клавиатуры, увеличение двойным касанием и щипком, закрытие кнопкой «Назад» телефона."""
+    return (f'<div class="lb" hidden role="dialog" aria-modal="true" aria-label="{E(T("Фото"))}">'
+            '<div class="lb-s"><img class="lb-i" alt="" decoding="async"></div>'
+            f'<button type="button" class="lb-b lb-x" data-lb-x aria-label="{E(T("Закрыть"))}">{ic("x")}</button>'
+            f'<button type="button" class="lb-b lb-p" data-lb-p aria-label="{E(T("Предыдущее фото"))}">{ic("back")}</button>'
+            f'<button type="button" class="lb-b lb-n" data-lb-n aria-label="{E(T("Следующее фото"))}">{ic("arr")}</button>'
+            '<div class="lb-t"></div></div>')
 
 def contacts_block():
     maps = "https://www.google.com/maps/search/?api=1&query=" + urllib.request.quote(f"{BRAND} {ADDRESS}")
@@ -434,9 +457,11 @@ def build_cars():
             main = img(p[0], T("{car} — фото {n}").format(car=c["full"], n=1), "(max-width: 899px) 100vw, 58vw", True)
             th = "".join(f'<button type="button" data-src="{u}-1200.webp" aria-label="{E(T("Фото"))} {i + 1}" aria-current="{"true" if i == 0 else "false"}"><img src="{u}-480.webp" alt="" width="480" height="320" loading="lazy" decoding="async"></button>' for i, u in enumerate(p))
             th = th if len(p) > 1 else ""
+            lb_open = f' data-lb="{E(",".join(u + "-1200.webp" for u in p))}"'
+            zoom_btn = f'<button type="button" class="gal-z" data-lb-o aria-label="{E(T("Открыть фото на весь экран"))}">{ic("zoom")}</button>'
         else:
             main = f'<div class="ph-x" aria-hidden="true"><span>{E(c["brand"].split("-")[0])}</span><b>{E(c["model"])}</b></div>'
-            th = ""
+            th = ""; lb_open = zoom_btn = ""
         sim = sorted([x for x in CARS if x is not c and set(x["cls"]) & set(c["cls"])], key=lambda x: abs(x["price"] - c["price"]))[:3]
         fit = "".join(f"<li>{E(T(x))}</li>" for x in c["fit"])
         cl = c["cls"][0]
@@ -447,8 +472,8 @@ def build_cars():
         cr = [(T("Главная"), "/"), (T("Автопарк"), "/avto/"), (cname(cl), f"/klass/{cl}/"), (c["full"], path)]
         body = f"""<div class="car-wrap">{crumbs(cr)}
 <section class="w car-top">
-<div class="gal-c"><div class="gal"><div class="gal-m">{main}</div>{f'<div class="gal-t">{th}</div>' if th else ""}</div>
-<aside class="fact"><b>{T("Интересный факт")}</b><p>{E(T(FACTS[c["slug"]]))}</p></aside></div>
+<div class="gal-c"><div class="gal"><div class="gal-m"{lb_open}>{main}{zoom_btn}</div>{f'<div class="gal-t">{th}</div>' if th else ""}</div>
+{lightbox() if p else ""}<aside class="fact"><b>{T("Интересный факт")}</b><p>{E(T(FACTS[c["slug"]]))}</p></aside></div>
 <div class="info"><h1>{T("Аренда {car} в Астане").format(car=E(c["full"]))}</h1><p class="lead">{E(T(c["about"]))}</p>
 <div class="price"><div class="c1"><b>{rub(c["price"])}</b><span>{T("в сутки")}</span></div><div><b>{rub(DEPOSIT)}</b><span>{T("депозит, вернём сразу")}</span></div></div>
 <div class="act"><a class="btn c" href="#bron">{ic("key")}{T("Забронировать")}</a><a class="btn" href="{wa(rent_msg(c))}" target="_blank" rel="noopener">{WA_IC}WhatsApp</a></div>
