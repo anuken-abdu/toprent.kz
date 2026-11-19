@@ -34,6 +34,14 @@
     });
   });
 
+  /* ---------- видео на фоне главной: только телефон, после загрузки страницы ---------- */
+  var hv = $(".hero-v");
+  if (hv && window.matchMedia && matchMedia("(max-width: 767px)").matches && !matchMedia("(prefers-reduced-motion: reduce)").matches &&
+      !(navigator.connection && navigator.connection.saveData)) {
+    var go = function () { hv.src = hv.getAttribute("data-src"); hv.muted = true; var p = hv.play(); if (p && p.catch) p.catch(function () {}); };
+    if (document.readyState === "complete") go(); else window.addEventListener("load", go);
+  }
+
   /* ---------- язык: закрыть список по клику вне и по Esc ---------- */
   var langs = $$("details.lang");
   document.addEventListener("click", function (e) { langs.forEach(function (d) { if (d.open && !d.contains(e.target)) d.open = false; }); });

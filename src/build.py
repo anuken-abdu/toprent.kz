@@ -11,7 +11,7 @@ from i18n import TR, CHAT_T
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
-VER = "1711266"
+VER = "1911261"
 E = html.escape
 CLS = {c["slug"]: c for c in CLASSES}
 nb = lambda n: f"{n:,}".replace(",", " ")
@@ -94,7 +94,7 @@ def minify_css(s):
     return re.sub(r"\s*([{};,>])\s*", r"\1", s).replace(";}", "}")
 CSS = minify_css((ROOT / "src" / "styles.css").read_text(encoding="utf-8"))
 THEME_JS = ("<script>(function(){var d=document.documentElement,t;try{t=localStorage.getItem('theme')}catch(e){}"
-            "if(t!=='light'&&t!=='dark')t='light';d.dataset.theme=t})()</script>")
+            "if(t!=='light'&&t!=='dark')t='dark';d.dataset.theme=t})()</script>")
 
 def conv_js():
     """Код события конверсии по инструкции Google + защита от блокировщиков (done + 800 мс)."""
@@ -222,7 +222,7 @@ def page(path, title, desc, body, cur="", ld=None, preload=None, og=None, noinde
 <meta name="description" content="{E(desc)}">
 <link rel="canonical" href="{url}">
 {alts}{'<meta name="robots" content="noindex,follow">' if noindex else '<meta name="robots" content="index,follow,max-image-preview:large">'}
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#050506">
 <meta name="color-scheme" content="light dark">
 <meta property="og:type" content="{og_type}"><meta property="og:locale" content="{loc}"><meta property="og:site_name" content="{BRAND}">
 <meta property="og:title" content="{E(title)}"><meta property="og:description" content="{E(desc)}"><meta property="og:url" content="{url}"><meta property="og:image" content="{og_img}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
@@ -358,13 +358,18 @@ def hero():
             for k in (f"{d}-{t}", f"{d}-{'night' if t == 'day' else 'day'}", f"{'mob' if d == 'pc' else 'pc'}-{t}"):
                 if have.get(k): return f"/assets/img/hero/{k}.webp"
             return next(f"/assets/img/hero/{k}.webp" for k, v in have.items() if v)
-        css = (f".hero-bg{{background:#e9ebee url({pick('mob', 'day')}) 50% 50%/cover no-repeat}}"
-               f":root[data-theme=dark] .hero-bg{{background:#08090b url({pick('mob', 'night')}) 50% 50%/cover no-repeat}}"
+        vid = (HERO / "mob-video.webp").exists() and (ROOT / "assets" / "video" / "hero-mob.mp4").exists()
+        mday, mnight = ("/assets/img/hero/mob-video.webp",) * 2 if vid else (pick('mob', 'day'), pick('mob', 'night'))
+        css = (f".hero-bg{{background:#e9ebee url({mday}) 50% 50%/cover no-repeat}}"
+               f":root[data-theme=dark] .hero-bg{{background:#08090b url({mnight}) 50% 50%/cover no-repeat}}"
                f"@media (min-width:768px){{.hero-bg{{background-image:url({pick('pc', 'day')});background-position:72% 50%}}:root[data-theme=dark] .hero-bg{{background-image:url({pick('pc', 'night')});background-position:72% 50%}}}}")
         js = ("<script>(function(){var n=document.documentElement.dataset.theme==='dark',m=window.matchMedia&&matchMedia('(max-width: 767px)').matches,"
-              f"u=n?(m?'{pick('mob', 'night')}':'{pick('pc', 'night')}'):(m?'{pick('mob', 'day')}':'{pick('pc', 'day')}'),"
+              f"u=n?(m?'{mnight}':'{pick('pc', 'night')}'):(m?'{mday}':'{pick('pc', 'day')}'),"
               "l=document.createElement('link');l.rel='preload';l.as='image';l.href=u;l.setAttribute('fetchpriority','high');document.head.appendChild(l)})()</script>\n")
         bg, pre, ph = "", f"<style>{css}</style>\n{js}", " hph"
+        if vid:   # видео только для телефона: файл подставляет app.js после загрузки страницы, на ПК не скачивается
+            bg = '<video class="hero-v" data-src="/assets/video/hero-mob.mp4" muted loop playsinline preload="none" aria-hidden="true"></video>'
+            ph = " hph hvid"
     else:
         p = f"/assets/img/cars/{HERO_CAR}-1"
         bg = f'<img src="{p}-800.webp" srcset="{srcset(p)}" sizes="100vw" alt="" width="1200" height="800" fetchpriority="high" decoding="async">'
@@ -376,7 +381,7 @@ def hero():
     lis = "".join(f"<li><b>{h}</b><span>{p}</span></li>" for k, h, p in rules)
     html_ = f"""<section class="hero{ph}"><div class="hero-bg" role="img" aria-label="{E(T("Аренда авто без водителя в Астане"))}">{bg}</div>
 <div class="w hero-in"><h1>{T("Аренда авто без водителя в Астане")}</h1>
-<p class="lead">{T("{n} — от Hyundai Accent до Mercedes G63, от {p} в сутки. Машины выдаём только для личных поездок.").format(n=cars_n(len(CARS)), p=rub(MIN_PRICE))}</p>
+<p class="lead">{T("{n} — от Hyundai Accent до Mercedes G63, от {p} в сутки. Машины выдаём только для личных поездок.").format(n=cars_n(FLEET_N), p=rub(MIN_PRICE))}</p>
 <ul class="hero-r">{lis}</ul>
 {call_act(hello())}</div></section>"""
     return html_, pre
@@ -393,7 +398,7 @@ def build_home():
 {contacts_block()}"""
     items = {"@type": "ItemList", "name": T("Автопарк"), "itemListElement": [{"@type": "ListItem", "position": i + 1, "url": SITE_URL + U(f"/avto/{c['slug']}/"), "name": c["full"]} for i, c in enumerate(by_price)]}
     page("/", T("Аренда авто без водителя в Астане от {p} ₸ | {b}").format(p=nb(MIN_PRICE), b=BRAND),
-         T("Аренда авто без водителя в Астане: {n} от Hyundai Accent до Mercedes G63, от {p} ₸ в сутки. С 20 лет, депозит 20 000 ₸. Не под такси.").format(n=cars_n(len(CARS)), p=nb(MIN_PRICE)),
+         T("Аренда авто без водителя в Астане: {n} от Hyundai Accent до Mercedes G63, от {p} ₸ в сутки. С 20 лет, депозит 20 000 ₸. Не под такси.").format(n=cars_n(FLEET_N), p=nb(MIN_PRICE)),
          body, "/", [faq_ld(tfaq(FAQ)), items], head_extra=pre)
 
 def contacts_block():
@@ -407,7 +412,7 @@ def contacts_block():
 def build_park():
     lst = sorted(CARS, key=lambda c: c["price"])
     cr = [(T("Главная"), "/"), (T("Автопарк"), "/avto/")]
-    body = top(cr, T("Автопарк"), T("{n} без водителя в Астане — эконом, бизнес, внедорожники и премиум. Цена за сутки, депозит {dep}.").format(n=cars_n(len(CARS)), dep=rub(DEPOSIT)),
+    body = top(cr, T("Автопарк"), T("{n} без водителя в Астане — эконом, бизнес, внедорожники и премиум. Цена за сутки, депозит {dep}.").format(n=cars_n(FLEET_N), dep=rub(DEPOSIT)),
                f'<h2 class="sr">{T("Все машины")}</h2>{filters()}{cards(lst, 4)}') + f"""
 <section class="s"><div class="w"><div class="sh"><h2>{T("Условия аренды")}</h2></div>{terms_html()}</div></section>
 {book()}"""
@@ -500,7 +505,7 @@ def build_prices():
 {book()}
 <section class="s lt"><div class="w"><div class="sh"><h2>{T("Вопросы о цене")}</h2></div>{faq_html(faq)}</div></section>"""
     page("/ceny/", T("Цены на аренду авто в Астане — от {p} ₸ | {b}").format(p=nb(MIN_PRICE), b=BRAND),
-         T("Прайс на аренду авто без водителя в Астане: {n} от {lo} до {hi} ₸ в сутки. Депозит 20 000 ₸, возвращается сразу.").format(n=cars_n(len(CARS)), lo=nb(MIN_PRICE), hi=nb(lst[-1]["price"])),
+         T("Прайс на аренду авто без водителя в Астане: {n} от {lo} до {hi} ₸ в сутки. Депозит 20 000 ₸, возвращается сразу.").format(n=cars_n(FLEET_N), lo=nb(MIN_PRICE), hi=nb(lst[-1]["price"])),
          body, "/ceny/", [crumbs_ld(lcr(cr)), faq_ld(faq)])
 
 def build_terms():
@@ -535,7 +540,7 @@ def build_districts():   # только русский
                ("Можно ли выехать за город?", "По согласованию и с доплатой, сумма зависит от направления.")]
         others = "".join(f'<a href="/rayony/{x["slug"]}/">{x["name"]}</a>' for x in DISTRICTS if x is not d)
         body = top(cr, f"Аренда авто без водителя — район {d['name']}, Астана",
-                   f"Аренда авто без водителя для жителей и гостей района {d['name']}: {cars_n(len(CARS))} от {rub(MIN_PRICE)} в сутки. Заберите машину в офисе на {E(STREET)} или закажите доставку по адресу за доплату.",
+                   f"Аренда авто без водителя для жителей и гостей района {d['name']}: {cars_n(FLEET_N)} от {rub(MIN_PRICE)} в сутки. Заберите машину в офисе на {E(STREET)} или закажите доставку по адресу за доплату.",
                    call_act(f"Здравствуйте! Хочу арендовать авто, район {d['name']}.")) + f"""
 <section class="s gr"><div class="w"><div class="sh"><h2>Машины</h2><p><a href="/avto/">Весь автопарк →</a></p></div>{filters()}{cards(sorted(CARS, key=lambda c: c["price"]), 4)}</div></section>
 <section class="s"><div class="w"><div class="sh"><h2>Как получить машину</h2></div><dl class="fac"><div><dt>В офисе</dt><dd>{E(ADDRESS)}, ежедневно {HOURS}. Без доплаты.</dd></div><div><dt>Доставка в район {d["name"]}</dt><dd>По вашему адресу, за доплату — сумму назовёт менеджер.</dd></div><div><dt>Документы</dt><dd>Удостоверение личности и водительские права.</dd></div><div><dt>Депозит</dt><dd>{rub(DEPOSIT)}, возвращаем сразу после возврата машины.</dd></div></dl></div></section>
@@ -602,7 +607,7 @@ def build_meta():
         return f"{r - (0.1 if b != p else 0):.1f}"
     sm = "".join(f"<url><loc>{SITE_URL}{p}</loc><lastmod>{ARTICLE_DATE}</lastmod><priority>{pri(p)}</priority></url>" for p in SITEMAP)
     (DIST / "sitemap.xml").write_text(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{sm}</urlset>\n', encoding="utf-8")
-    (DIST / "site.webmanifest").write_text(json.dumps({"name": f"{BRAND} — аренда авто в Астане", "short_name": BRAND, "start_url": "/", "display": "standalone", "background_color": "#ffffff", "theme_color": "#ffffff",
+    (DIST / "site.webmanifest").write_text(json.dumps({"name": f"{BRAND} — аренда авто в Астане", "short_name": BRAND, "start_url": "/", "display": "standalone", "background_color": "#050506", "theme_color": "#050506",
         "icons": [{"src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png"}]}, ensure_ascii=False), encoding="utf-8")
     fleet = "\n".join(f"- {c['full']} — {nb(c['price'])} ₸/сутки; {c['body'].lower()}, {cls_names(c).lower()}: {SITE_URL}/avto/{c['slug']}/" for c in sorted(CARS, key=lambda c: c["price"]))
     terms = "\n".join(f"- {h}: {p}" for _, h, p in TERMS) + "\n" + "\n".join(f"- {x}" for x in RULES)
@@ -613,7 +618,7 @@ def build_meta():
     arts = "\n".join(f"- {a['title']}: {SITE_URL}/stati/{a['slug']}/" for a in ARTICLES)
     llms = f"""# {BRAND} — аренда авто без водителя в Астане
 
-> Прокат автомобилей без водителя в Астане (Казахстан): {len(CARS)} машин от {nb(MIN_PRICE)} ₸ в сутки — эконом, бизнес, внедорожники и премиум. Только для личных поездок: не под такси, доставку и перевозки. Возраст от 20 лет, стаж от 2 лет, депозит {nb(DEPOSIT)} ₸ возвращается сразу после возврата авто. Ежедневно {HOURS}.
+> Прокат автомобилей без водителя в Астане (Казахстан): {cars_n(FLEET_N)} от {nb(MIN_PRICE)} ₸ в сутки — эконом, бизнес, внедорожники и премиум. Только для личных поездок: не под такси, доставку и перевозки. Возраст от 20 лет, стаж от 2 лет, депозит {nb(DEPOSIT)} ₸ возвращается сразу после возврата авто. Ежедневно {HOURS}.
 
 ## Языки сайта
 - Русский: {SITE_URL}/
