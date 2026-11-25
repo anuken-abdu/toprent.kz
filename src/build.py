@@ -11,7 +11,7 @@ from i18n import TR, CHAT_T
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
-VER = "1911262"
+VER = "2511261"
 E = html.escape
 CLS = {c["slug"]: c for c in CLASSES}
 nb = lambda n: f"{n:,}".replace(",", " ")
@@ -372,8 +372,8 @@ def hero():
             for k in (f"{d}-{t}", f"{d}-{'night' if t == 'day' else 'day'}", f"{'mob' if d == 'pc' else 'pc'}-{t}"):
                 if have.get(k): return f"/assets/img/hero/{k}.webp"
             return next(f"/assets/img/hero/{k}.webp" for k, v in have.items() if v)
-        vid = (HERO / "mob-video.webp").exists() and (ROOT / "assets" / "video" / "hero-mob.mp4").exists()
-        mday, mnight = ("/assets/img/hero/mob-video.webp",) * 2 if vid else (pick('mob', 'day'), pick('mob', 'night'))
+        vid = (HERO / "mob-video-sq.webp").exists() and (ROOT / "assets" / "video" / "hero-sq.mp4").exists()
+        mday, mnight = ("/assets/img/hero/mob-video-sq.webp",) * 2 if vid else (pick('mob', 'day'), pick('mob', 'night'))
         css = (f".hero-bg{{background:#e9ebee url({mday}) 50% 50%/cover no-repeat}}"
                f":root[data-theme=dark] .hero-bg{{background:#08090b url({mnight}) 50% 50%/cover no-repeat}}"
                f"@media (min-width:768px){{.hero-bg{{background-image:url({pick('pc', 'day')});background-position:72% 50%}}:root[data-theme=dark] .hero-bg{{background-image:url({pick('pc', 'night')});background-position:72% 50%}}}}")
@@ -382,7 +382,7 @@ def hero():
               "l=document.createElement('link');l.rel='preload';l.as='image';l.href=u;l.setAttribute('fetchpriority','high');document.head.appendChild(l)})()</script>\n")
         bg, pre, ph = "", f"<style>{css}</style>\n{js}", " hph"
         if vid:   # видео только для телефона: файл подставляет app.js после загрузки страницы, на ПК не скачивается
-            bg = '<video class="hero-v" data-src="/assets/video/hero-mob.mp4" muted loop playsinline preload="none" aria-hidden="true"></video>'
+            bg = '<video class="hero-v" data-src="/assets/video/hero-sq.mp4" muted loop playsinline preload="none" aria-hidden="true"></video>'
             ph = " hph hvid"
     else:
         p = f"/assets/img/cars/{HERO_CAR}-1"

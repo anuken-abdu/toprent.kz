@@ -413,19 +413,15 @@ p{margin:0}
 .hero.hph .hero-bg::after,:root[data-theme=dark] .hero.hph .hero-bg::after{background:linear-gradient(0deg,var(--bg) 0%,rgba(0,0,0,0) 30%)}
 .hero.hph .hero-in{padding-top:4px;padding-bottom:30px}
 .hero.hph .hero-r li{background:var(--s2)}}
-/* телефон с видео: первый экран — только видео и крупный заголовок без города; текст, условия и кнопки — под видео */
+/* телефон с видео: квадратное окно с видео, под ним заголовок, дальше текст, условия и кнопки */
 .hero-v{display:none}
 @media (max-width:767px){.hero.hvid{display:block;min-height:0;background:var(--bg)}
-.hero.hvid .hero-bg{position:absolute;left:0;right:0;top:0;bottom:auto;z-index:0;height:calc(100svh - 67px);max-height:none}
+.hero.hvid .hero-bg{position:relative;inset:auto;z-index:0;margin:16px 16px 0;height:auto;max-height:none;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background-size:cover;background-position:50% 50%}
 .hero.hvid .hero-bg::after{display:none}
 .hero.hvid .hero-v{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.hero.hvid .hero-in{padding:0 16px 30px}
-.hero.hvid .hero-t{height:calc(100svh - 67px);padding-top:22px}
-.hero.hvid h1{max-width:none;color:#fff;text-transform:uppercase;font-weight:700;letter-spacing:-.02em;line-height:.98;font-size:calc((100vw - 32px) * var(--k));text-shadow:0 2px 18px rgba(0,0,0,.35)}
-.hero.hvid .h1-l{display:block;white-space:nowrap}
-.hero.hvid .h1-c{display:none}
-.hero.hvid .hero-b{padding-top:28px}
-.hero.hvid .hero-b .lead{margin-top:0}
+.hero.hvid .hero-in{padding:22px 16px 30px}
+.hero.hvid h1{max-width:none}
+.hero.hvid .hero-b .lead{margin-top:14px}
 .hero.hvid .hero-r li{background:var(--s2)}}
 
 /* просмотр фото на весь экран */
